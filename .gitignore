@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+env/
+venv/
+*.egg-info/
+
+# Datos generados
+datos_escaneos/
+intel_escaneos/
+*.json
+*.txt
+!requirements.txt
+
+# Editor
+.vscode/
+.idea/
+*.swp
