@@ -1,13 +1,9 @@
 ```markdown
-![Version](https://img.shields.io/badge/version-1.0-blue)
+![Version](https://img.shields.io/badge/version-1.2-blue)
 ![Release](https://img.shields.io/badge/release-stable-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Python](https://img.shields.io/badge/python-3.8+-blue)
-![Code style](https://img.shields.io/badge/code%20style-PEP8-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Termux-lightgrey)
-![Termux](https://img.shields.io/badge/Termux-Compatible-brightgreen)
-![Linux](https://img.shields.io/badge/Linux-Compatible-brightgreen)
-![macOS](https://img.shields.io/badge/macOS-Compatible-brightgreen)
 ![OSINT](https://img.shields.io/badge/OSINT-Sí-brightgreen)
 ![Passive](https://img.shields.io/badge/Passive-Yes-blue)
 ![Analytical](https://img.shields.io/badge/Analytical-Yes-blue)
@@ -17,7 +13,7 @@
 ![Dashboard](https://img.shields.io/badge/Web%20Dashboard-Cyberpunk-ff69b4)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)
 
-# 🛡️ NEBULA ANTISCAN – Detector de escaneos agresivos en tiempo real
+# 🛡️ NEBULA ANTISCAN v1.2 – Detector de escaneos agresivos en tiempo real
 
 **NEBULA ANTISCAN** es una herramienta de ciberdefensa diseñada para detectar, geolocalizar y clasificar **escaneos agresivos e ilegales** dirigidos a infraestructuras críticas.  
 Nace con una filosofía clara: *“Conocer al enemigo es el primer paso para defenderte”*. Por eso su diseño prioriza la transparencia, la ética y la inteligencia de amenazas.
@@ -48,9 +44,9 @@ Nace con una filosofía clara: *“Conocer al enemigo es el primer paso para def
 
 NEBULA ANTISCAN automatiza la detección de **escaneos maliciosos** a nivel global. En lugar de revisar manualmente listas negras o logs de servidores, la herramienta:
 
-- 🔍 Descarga **más de 13 fuentes OSINT** en tiempo real (Blocklist.de, DShield, Spamhaus, Emerging Threats, FireHOL, GreenSnow, AlienVault, CIRCL, Maltrail, etc.).
+- 🔍 Descarga **más de 60 fuentes OSINT** en tiempo real (Blocklist.de, DShield, Spamhaus, Emerging Threats, FireHOL, GreenSnow, AlienVault, CIRCL, Maltrail, Spydi, Feodo, URLhaus, etc.).
 - 🌍 **Geolocaliza** cada IP con país, código de país, ASN y organización.
-- 🔥 **Clasifica** IPs por botnet (ThreatFox, CI Army, Feodo, etc.) y por grupo de ataque (Killnet, NoName057(16), etc.).
+- 🔥 **Clasifica** IPs por botnet (ThreatFox, CI Army, Feodo, Spydi, etc.) y por grupo de ataque (Killnet, NoName057(16), DarkStorm, RootSec, etc.).
 - 📊 **Muestra** los resultados en terminal con formato numerado, colores ANSI y comandos interactivos (`vt`, `q`).
 - 🖥️ **Expone** un dashboard web cyberpunk con estadísticas, paginación, gráficos y descarga JSON.
 
@@ -60,7 +56,7 @@ NEBULA ANTISCAN automatiza la detección de **escaneos maliciosos** a nivel glob
 
 | Característica | Descripción |
 |----------------|-------------|
-| 🔁 **Rotación de User‑Agent** | Simula diferentes navegadores y sistemas operativos para evitar bloqueos. |
+| 🔁 **Rotación de User‑Agent** | Simula diferentes navegadores y sistemas operativos (130 UAs únicos). |
 | 🧠 **Paginación inteligente** | Adapta la extracción a los formatos de cada fuente (listas planas, CSV, JSON, etc.). |
 | 🔎 **Detector automático de URLs** | Si una fuente cambia de URL, busca alternativas (pensado para futuras extensiones). |
 | 📊 **Clasificación avanzada** | Marca IPs con 🔥 (botnet) y 🚩 (grupo) usando feeds actualizados cada 6 horas. |
@@ -94,23 +90,17 @@ El siguiente diagrama muestra el flujo de datos desde las fuentes hasta las sali
 
 ## 📊 Fuentes OSINT integradas
 
-NEBULA ANTISCAN se alimenta de **13 fuentes activas** que reportan IPs maliciosas en tiempo real:
+NEBULA ANTISCAN se alimenta de **más de 60 fuentes activas** que reportan IPs maliciosas en tiempo real:
 
-| Fuente | Tipo de actividad |
-|--------|-------------------|
-| Blocklist.de (SSH) | Bruteforce a SSH |
-| Blocklist.de (FTP) | Bruteforce a FTP |
-| Blocklist.de (Bots) | Escáneres y bots |
-| Blocklist.de (Mail) | Spam y ataques a mail |
-| Blocklist.de (Apache) | Ataques a servidores web |
-| DShield | Escáneres detectados por honeypots |
-| Spamhaus EDROP | Redes maliciosas (IPs individuales) |
-| Emerging Threats | IPs comprometidas |
-| FireHOL Level1 | IPs maliciosas consolidadas |
-| GreenSnow | Atacantes activos |
-| AlienVault OTX | IPs con mala reputación |
-| CIRCL OSINT | IPs de escáneres y bruteforce |
-| Maltrail | IPs maliciosas de tráfico |
+| Categoría | Fuentes |
+|-----------|---------|
+| **Escáneres activos** | Blocklist.de (5 sublistas), DShield, SANS ISC, AlienVault OTX |
+| **Malware y C2** | Feodo Tracker, ThreatFox, Spydi ThreatIntel (3 niveles), Malware Patrol |
+| **Botnets** | FireHOL (4 niveles), GreenSnow, CI Army, CIRCL, Maltrail |
+| **Spamhaus** | EDROP, DROPv6 |
+| **Proxies residenciales** | MaxMind High‑Risk, IPIDEA (próximamente), SocksEscort (próximamente) |
+| **Agregadores** | CINS Army, Ultimate IP Blacklist, IPsum, Blackbook |
+| **Grupos específicos** | Killnet, NoName057(16), DarkStorm, RootSec, Coup, Electus, BotnetKingdom |
 
 ---
 
@@ -122,10 +112,22 @@ Además de las fuentes de escaneo, NEBULA ANTISCAN incorpora **feeds de intelige
 |------|----------|------|
 | ThreatFox | 🔥 ThreatFox | Botnet |
 | CI Army | 🔥 CI Army | Botnet |
-| Feodo Tracker | 🔥 Feodo | Botnet |
+| Emerging Threats | 🔥 EmergingThreats | Botnet |
+| FireHOL | 🔥 FireHOL | Botnet |
 | GreenSnow | 🔥 GreenSnow | Botnet |
-| Killnet proxies | 🚩 Killnet | Grupo |
+| Feodo Tracker | 🔥 Feodo/Mirai | Botnet |
+| AlienVault OTX | 🔥 AlienVault | Botnet |
+| DShield | 🔥 DShield | Botnet |
+| Spamhaus | 🔥 Spamhaus | Botnet |
+| URLhaus | 🔥 URLhaus | Botnet |
+| Spydi (Alta/Media/Baja) | 🔥 Spydi (Nivel) | Botnet |
+| Killnet | 🚩 Killnet | Grupo |
 | NoName057(16) | 🚩 NoName057(16) | Grupo |
+| DarkStorm | 🚩 DarkStorm Team | Grupo |
+| RootSec | 🚩 RootSec | Grupo |
+| Coup | 🚩 Coup | Grupo |
+| Electus | 🚩 Electus | Grupo |
+| BotnetKingdom | 🚩 BotnetKingdom | Grupo |
 
 Estos feeds se actualizan automáticamente cada 6 horas en segundo plano, sin interrumpir el monitor principal.
 
@@ -151,7 +153,7 @@ Al ejecutar NEBULA ANTISCAN, aparece un menú con **7 opciones**:
   ```
   [15:18:28] IPs obtenidas: 3267 únicas
        1. 185.130.5.123     Russia          ASN:AS201814   Some Provider          🔥ThreatFox   🚩Killnet
-       2. 45.155.205.5      Netherlands     ASN:AS20495    Some VPS               🔥GreenSnow   🚩-
+       2. 45.155.205.5      Netherlands     ASN:AS20495    Some VPS               🔥Spydi (Alta) 🚩-
   ```
 - **Comandos interactivos**:
   - `vt` – genera archivo con enlaces a VirusTotal (y si hay API clave, incluye resúmenes de reputación).
@@ -164,11 +166,12 @@ Al ejecutar NEBULA ANTISCAN, aparece un menú con **7 opciones**:
 Al seleccionar la opción **5**, se levanta un servidor Flask en `http://localhost:5091`.  
 El dashboard ofrece:
 
-- 📊 **Estadísticas en vivo**: total IPs, países distintos, ASN distintos.
+- 📊 **Estadísticas en vivo**: total IPs, países distintos, ASN distintos, botnets detectadas.
 - 📋 **Tabla paginada**: 30 IPs por página con columnas: #, IP, País, ASN, Organización, 🔥, 🚩, Última vez.
 - ⬇️ **Botón de descarga JSON** para exportar todos los datos.
 - 🔄 **Actualización automática** cada 30 segundos.
 - 🖥️ **Diseño cyberpunk**: fondo negro, neón verde, naranja, fuentes modernas.
+- 📈 **Gráfico de evolución temporal** (últimos 7 días).
 
 ---
 
@@ -231,7 +234,7 @@ nebula-antiscan/
 ├── DISCLAIMER.md
 ├── requirements.txt
 ├── install.sh
-├── nebula_antiscan.py          # Código principal (monolítico, fácil de usar)
+├── nebula_antiscan.py          # Código principal (monolítico, >2000 líneas)
 └── images/
     └── arquitectura.png         # Diagrama de arquitectura
 ```
@@ -265,6 +268,7 @@ Consulta el archivo [DISCLAIMER.md](DISCLAIMER.md) para más detalles.
 - Alertas por Telegram / Correo.
 - Exportación a formato STIX/TAXII.
 - Base de datos local GeoLite2 para geolocalización offline.
+- Más fuentes de inteligencia (IPIDEA, SocksEscort, etc.).
 
 ---
 
@@ -277,4 +281,3 @@ Este proyecto está bajo la licencia **MIT**. Consulta el archivo [LICENSE](LICE
 *Creado por **Condor2026 – SpectrumSecurity** para la comunidad de ciberseguridad.*
 
 ¡Que los escaneos no te pillen desprevenido! 🚀
-```
