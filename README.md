@@ -208,7 +208,7 @@ Si no tienes clave, la herramienta genera solo los enlaces sin consultar la API.
 pkg update && pkg upgrade -y
 pkg install python git -y
 pip install -r requirements.txt
-git clone https://github.com/CONDOR2026/nebula-antiscan.git   # <-- CAMBIA CONDOR2026 POR TU USUARIO
+git clone https://github.com/CONDOR2026/nebula-antiscan.git
 cd nebula-antiscan
 python nebula.py
 ```
@@ -216,7 +216,7 @@ python nebula.py
 ### En Linux / macOS
 
 ```bash
-git clone https://github.com/TU_USUARIO/nebula-antiscan.git   # <-- REEMPLAZA TU_USUARIO
+git clone https://github.com/CONDOR2026/nebula-antiscan.git
 cd nebula-antiscan
 pip install -r requirements.txt
 python nebula.py
