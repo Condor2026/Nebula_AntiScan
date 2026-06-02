@@ -208,18 +208,18 @@ Si no tienes clave, la herramienta genera solo los enlaces sin consultar la API.
 pkg update && pkg upgrade -y
 pkg install python git -y
 pip install -r requirements.txt
-git clone https://github.com/CONDOR2026/nebula-antiscan.git
+git clone https://github.com/condor2026/nebula-antiscan
 cd nebula-antiscan
-python nebula.py
+python nebula-antiscan.py
 ```
 
 ### En Linux / macOS
 
 ```bash
-git clone https://github.com/CONDOR2026/nebula-antiscan.git
+git clone https://github.com/condor2026/nebula-antiscan
 cd nebula-antiscan
 pip install -r requirements.txt
-python nebula.py
+python nebula-antiscan.py
 ```
 
 ### Instalación rápida con script (Linux/macOS/Termux)
@@ -227,7 +227,16 @@ python nebula.py
 ```bash
 chmod +x install.sh
 ./install.sh
-python nebula.py
+python nebula-antiscan.py
+```
+
+### En Linux / macOS
+
+```bash
+git clone https://github.com/condor2026/nebula-antiscan
+cd nebula-antiscan
+pip install -r requirements.txt
+python nebula-antiscan.py
 ```
 
 > **Nota:** Si no quieres usar `git`, puedes descargar el ZIP directamente desde la página de GitHub y descomprimirlo.
