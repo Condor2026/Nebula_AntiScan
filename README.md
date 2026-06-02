@@ -1,5 +1,4 @@
-```markdown
-![Version](https://img.shields.io/badge/version-1.2-blue)
+![Version](https://img.shields.io/badge/version-1.3-blue)
 ![Release](https://img.shields.io/badge/release-stable-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Python](https://img.shields.io/badge/python-3.8+-blue)
@@ -9,11 +8,12 @@
 ![Analytical](https://img.shields.io/badge/Analytical-Yes-blue)
 ![Threat Intel](https://img.shields.io/badge/Threat%20Intel-Enabled-blue)
 ![Botnet Detection](https://img.shields.io/badge/Botnet%20Detection-🔥-orange)
+![CIDR Support](https://img.shields.io/badge/CIDR%20Support-Yes-green)
 ![VirusTotal](https://img.shields.io/badge/VirusTotal-API%20Ready-orange)
 ![Dashboard](https://img.shields.io/badge/Web%20Dashboard-Cyberpunk-ff69b4)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)
 
-# 🛡️ NEBULA ANTISCAN v1.2 – Detector de escaneos agresivos en tiempo real
+# 🛡️ NEBULA ANTISCAN v1.3 – Detector de escaneos agresivos en tiempo real
 
 **NEBULA ANTISCAN** es una herramienta de ciberdefensa diseñada para detectar, geolocalizar y clasificar **escaneos agresivos e ilegales** dirigidos a infraestructuras críticas.  
 Nace con una filosofía clara: *“Conocer al enemigo es el primer paso para defenderte”*. Por eso su diseño prioriza la transparencia, la ética y la inteligencia de amenazas.
@@ -44,11 +44,11 @@ Nace con una filosofía clara: *“Conocer al enemigo es el primer paso para def
 
 NEBULA ANTISCAN automatiza la detección de **escaneos maliciosos** a nivel global. En lugar de revisar manualmente listas negras o logs de servidores, la herramienta:
 
-- 🔍 Descarga **más de 60 fuentes OSINT** en tiempo real (Blocklist.de, DShield, Spamhaus, Emerging Threats, FireHOL, GreenSnow, AlienVault, CIRCL, Maltrail, Spydi, Feodo, URLhaus, etc.).
+- 🔍 Descarga **73 fuentes OSINT** en tiempo real (Blocklist.de, DShield, Spamhaus, Emerging Threats, FireHOL, GreenSnow, AlienVault, CIRCL, Maltrail, etc.) y **más de 80 feeds de inteligencia**.
 - 🌍 **Geolocaliza** cada IP con país, código de país, ASN y organización.
-- 🔥 **Clasifica** IPs por botnet (ThreatFox, CI Army, Feodo, Spydi, etc.) y por grupo de ataque (Killnet, NoName057(16), DarkStorm, RootSec, etc.).
-- 📊 **Muestra** los resultados en terminal con formato numerado, colores ANSI y comandos interactivos (`vt`, `q`).
-- 🖥️ **Expone** un dashboard web cyberpunk con estadísticas, paginación, gráficos y descarga JSON.
+- 🔥 **Clasifica** IPs por botnet (ThreatFox, CI Army, Feodo, Spydi, MaxMind, BinaryDefense, etc.) y por grupo de ataque (Killnet, NoName057(16), DarkStorm, RootSec, Coup, Electus, BotnetKingdom...).
+- 📊 **Muestra** los resultados en terminal con formato numerado, colores ANSI y comandos interactivos (`vt`, `top`, `q`).
+- 🖥️ **Expone** un dashboard web cyberpunk con estadísticas, paginación, gráficos de evolución temporal, panel de contexto y descarga JSON.
 
 ---
 
@@ -57,11 +57,11 @@ NEBULA ANTISCAN automatiza la detección de **escaneos maliciosos** a nivel glob
 | Característica | Descripción |
 |----------------|-------------|
 | 🔁 **Rotación de User‑Agent** | Simula diferentes navegadores y sistemas operativos (130 UAs únicos). |
-| 🧠 **Paginación inteligente** | Adapta la extracción a los formatos de cada fuente (listas planas, CSV, JSON, etc.). |
-| 🔎 **Detector automático de URLs** | Si una fuente cambia de URL, busca alternativas (pensado para futuras extensiones). |
+| 🧠 **Soporte de rangos CIDR** | Detecta redes enteras (ej. `192.168.1.0/24`) además de IPs individuales. |
+| 🔎 **Normalización robusta** | Adapta la extracción a cada fuente (listas planas, CSV, formato DShield, Spamhaus, etc.). |
 | 📊 **Clasificación avanzada** | Marca IPs con 🔥 (botnet) y 🚩 (grupo) usando feeds actualizados cada 6 horas. |
 | 🔗 **Conexiones entre incidentes** | Agrupa IPs por misma botnet o grupo y muestra frecuencias. |
-| 🌐 **Interfaz web interactiva** | Gráficos de barras, filtros por período, lista de últimas IPs y descarga JSON. |
+| 🌐 **Interfaz web interactiva** | Gráficos de barras, panel de contexto (grupo activo, país predominante, botnet principal), filtros por fuente y descarga JSON. |
 | 🖥️ **Menú terminal completo** | 7 comandos para ejecutar todas las funciones sin necesidad de abrir el navegador. |
 | 🔌 **API de VirusTotal (opcional)** | Si tienes clave, enriquece los resultados con reputación y detecciones. |
 | 💾 **Almacenamiento local** | Todo se guarda en JSON, sin necesidad de bases de datos externas. |
@@ -80,17 +80,17 @@ El siguiente diagrama muestra el flujo de datos desde las fuentes hasta las sali
 
 | Módulo | Descripción |
 |--------|-------------|
-| **Recolector** | Itera sobre las fuentes cada 30 segundos, extrae IPs y maneja formatos especiales (DShield tabulado, Spamhaus con `;`, Maltrail con comentarios). |
-| **Motor de detección** | Normaliza, filtra privadas/whitelist, geolocaliza (con caché) y aplica inteligencia de grupos. |
-| **Intel en segundo plano** | Actualiza feeds de botnets y grupos cada 6 horas sin interrumpir el monitor. |
+| **Recolector** | Itera sobre las 73 fuentes cada 30 segundos, extrae IPs y rangos CIDR, maneja formatos especiales. |
+| **Motor de detección** | Normaliza, geolocaliza (con caché) y aplica inteligencia de grupos/botnets. |
+| **Intel en segundo plano** | Actualiza más de 80 feeds de inteligencia cada 6 horas sin interrumpir el monitor. |
 | **Almacenamiento** | JSON diario, últimas IPs y caché geográfica. |
-| **Salidas** | Terminal con colores y comandos (`vt`, `q`), dashboard web con Flask y auto‑refresh. |
+| **Salidas** | Terminal con colores y comandos (`vt`, `top`, `q`), dashboard web con Flask y auto‑refresh. |
 
 ---
 
 ## 📊 Fuentes OSINT integradas
 
-NEBULA ANTISCAN se alimenta de **más de 60 fuentes activas** que reportan IPs maliciosas en tiempo real:
+NEBULA ANTISCAN se alimenta de **73 fuentes activas** que reportan IPs maliciosas en tiempo real (lista completa en el código). Algunas de las más importantes:
 
 | Categoría | Fuentes |
 |-----------|---------|
@@ -98,7 +98,7 @@ NEBULA ANTISCAN se alimenta de **más de 60 fuentes activas** que reportan IPs m
 | **Malware y C2** | Feodo Tracker, ThreatFox, Spydi ThreatIntel (3 niveles), Malware Patrol |
 | **Botnets** | FireHOL (4 niveles), GreenSnow, CI Army, CIRCL, Maltrail |
 | **Spamhaus** | EDROP, DROPv6 |
-| **Proxies residenciales** | MaxMind High‑Risk, IPIDEA (próximamente), SocksEscort (próximamente) |
+| **Proxies residenciales** | MaxMind High‑Risk, IPIDEA (futuro), SocksEscort (futuro) |
 | **Agregadores** | CINS Army, Ultimate IP Blacklist, IPsum, Blackbook |
 | **Grupos específicos** | Killnet, NoName057(16), DarkStorm, RootSec, Coup, Electus, BotnetKingdom |
 
@@ -106,7 +106,7 @@ NEBULA ANTISCAN se alimenta de **más de 60 fuentes activas** que reportan IPs m
 
 ## 🧠 Inteligencia de amenazas
 
-Además de las fuentes de escaneo, NEBULA ANTISCAN incorpora **feeds de inteligencia** para clasificar IPs por botnet y grupo de ataque:
+Además de las fuentes de escaneo, NEBULA ANTISCAN incorpora **más de 80 feeds de inteligencia** para clasificar IPs por botnet y grupo de ataque. Ejemplos:
 
 | Feed | Etiqueta | Tipo |
 |------|----------|------|
@@ -120,6 +120,9 @@ Además de las fuentes de escaneo, NEBULA ANTISCAN incorpora **feeds de intelige
 | DShield | 🔥 DShield | Botnet |
 | Spamhaus | 🔥 Spamhaus | Botnet |
 | URLhaus | 🔥 URLhaus | Botnet |
+| MaxMind | 🔥 MaxMind Proxy | Botnet |
+| BinaryDefense | 🔥 BinaryDefense | Botnet |
+| BruteforceBlocker | 🔥 Bruteforce Blocker | Botnet |
 | Spydi (Alta/Media/Baja) | 🔥 Spydi (Nivel) | Botnet |
 | Killnet | 🚩 Killnet | Grupo |
 | NoName057(16) | 🚩 NoName057(16) | Grupo |
@@ -137,10 +140,10 @@ Estos feeds se actualizan automáticamente cada 6 horas en segundo plano, sin in
 
 Al ejecutar NEBULA ANTISCAN, aparece un menú con **7 opciones**:
 
-```
+```text
 1. 🚀 Iniciar monitor en tiempo real (ciclos de 30s)
 2. ⚡ Ejecutar un solo ciclo de escaneo (prueba rápida)
-3. 📊 Ver estadísticas globales (top países y ASN)
+3. 📊 Ver estadísticas globales (top países, ASN, botnets, grupos)
 4. 📰 Ver últimas 50 IPs detectadas
 5. 🌐 Iniciar servidor web (dashboard cyberpunk)
 6. 🔗 Generar enlaces VirusTotal (con API si hay clave)
@@ -150,13 +153,16 @@ Al ejecutar NEBULA ANTISCAN, aparece un menú con **7 opciones**:
 ### Monitor en tiempo real (opción 1)
 
 - Muestra IPs cada 30 segundos con formato numerado, colores y columnas:
-  ```
-  [15:18:28] IPs obtenidas: 3267 únicas
-       1. 185.130.5.123     Russia          ASN:AS201814   Some Provider          🔥ThreatFox   🚩Killnet
-       2. 45.155.205.5      Netherlands     ASN:AS20495    Some VPS               🔥Spydi (Alta) 🚩-
-  ```
+
+```text
+[15:18:28] IPs obtenidas: 3267 únicas
+   1. 185.130.5.123   Russia          ASN:AS201814   Some Provider   🔥ThreatFox   🚩Killnet
+   2. 45.155.205.5    Netherlands     ASN:AS20495    Some VPS        🔥Spydi (Alta) 🚩-
+```
+
 - **Comandos interactivos**:
   - `vt` – genera archivo con enlaces a VirusTotal (y si hay API clave, incluye resúmenes de reputación).
+  - `top` – muestra las IPs más activas históricamente.
   - `q` – sale del monitor.
 
 ---
@@ -167,11 +173,13 @@ Al seleccionar la opción **5**, se levanta un servidor Flask en `http://localho
 El dashboard ofrece:
 
 - 📊 **Estadísticas en vivo**: total IPs, países distintos, ASN distintos, botnets detectadas.
-- 📋 **Tabla paginada**: 30 IPs por página con columnas: #, IP, País, ASN, Organización, 🔥, 🚩, Última vez.
-- ⬇️ **Botón de descarga JSON** para exportar todos los datos.
+- 📋 **Tabla paginada**: 30 IPs por página con columnas: #, IP, País, ASN, Organización, 🔥, 🚩, 📡 Fuente, Última vez.
+- 📥 **Botón de descarga JSON** para exportar todos los datos.
 - 🔄 **Actualización automática** cada 30 segundos.
 - 🖥️ **Diseño cyberpunk**: fondo negro, neón verde, naranja, fuentes modernas.
 - 📈 **Gráfico de evolución temporal** (últimos 7 días).
+- 🧠 **Panel de contexto** (grupo más activo, país predominante, botnet principal, fuente más activa).
+- 🔎 **Filtros** (todas, solo con botnet, solo con grupo, por fuente origen).
 
 ---
 
@@ -200,18 +208,18 @@ Si no tienes clave, la herramienta genera solo los enlaces sin consultar la API.
 pkg update && pkg upgrade -y
 pkg install python git -y
 pip install -r requirements.txt
-git clone https://github.com/tuusuario/nebula-antiscan.git
+git clone https://github.com/CONDOR2026/nebula-antiscan.git   # <-- CAMBIA CONDOR2026 POR TU USUARIO
 cd nebula-antiscan
-python nebula_antiscan.py
+python nebula.py
 ```
 
 ### En Linux / macOS
 
 ```bash
-git clone https://github.com/tuusuario/nebula-antiscan.git
+git clone https://github.com/TU_USUARIO/nebula-antiscan.git   # <-- REEMPLAZA TU_USUARIO
 cd nebula-antiscan
 pip install -r requirements.txt
-python nebula_antiscan.py
+python nebula.py
 ```
 
 ### Instalación rápida con script (Linux/macOS/Termux)
@@ -219,8 +227,10 @@ python nebula_antiscan.py
 ```bash
 chmod +x install.sh
 ./install.sh
-python nebula_antiscan.py
+python nebula.py
 ```
+
+> **Nota:** Si no quieres usar `git`, puedes descargar el ZIP directamente desde la página de GitHub y descomprimirlo.
 
 ---
 
@@ -230,16 +240,15 @@ python nebula_antiscan.py
 nebula-antiscan/
 ├── README.md
 ├── LICENSE
-├── SECURITY.md
 ├── DISCLAIMER.md
 ├── requirements.txt
 ├── install.sh
-├── nebula_antiscan.py          # Código principal (monolítico, >2000 líneas)
+├── nebula.py                      # Código principal (monolítico)
 └── images/
-    └── arquitectura.png         # Diagrama de arquitectura
+    └── arquitectura.png           # Diagrama de arquitectura
 ```
 
-*(El código es monolítico a propósito: facilita la portabilidad, la ejecución en Termux y las contribuciones puntuales.)*
+(El código es monolítico a propósito: facilita la portabilidad, la ejecución en Termux y las contribuciones puntuales.)
 
 ---
 
@@ -249,8 +258,7 @@ nebula-antiscan/
 - **No se almacenan datos personales** – solo direcciones IP y metadatos técnicos (país, ASN, organización).
 - **Uso legítimo** – la herramienta está diseñada para ciberseguridad defensiva, inteligencia de amenazas y educación.
 - **Transparencia** – todo el código es abierto y verificable.
-
-Consulta el archivo [DISCLAIMER.md](DISCLAIMER.md) para más detalles.
+- Consulta el archivo `DISCLAIMER.md` para más detalles.
 
 ---
 
@@ -258,11 +266,11 @@ Consulta el archivo [DISCLAIMER.md](DISCLAIMER.md) para más detalles.
 
 ¿Tienes ideas para mejorar NEBULA ANTISCAN? ¡Las contribuciones son bienvenidas!
 
-- **Reporta bugs** en Issues.
-- **Envía pull requests** con mejoras.
-- **Sugiere nuevas fuentes** o funcionalidades.
+- Reporta bugs en **Issues**.
+- Envía pull requests con mejoras.
+- Sugiere nuevas fuentes o funcionalidades.
 
-**Próximos pasos planeados:**
+**Próximos pasos planeados**:
 - Soporte para IPv6.
 - Integración con CrowdSec CTI.
 - Alertas por Telegram / Correo.
@@ -274,10 +282,10 @@ Consulta el archivo [DISCLAIMER.md](DISCLAIMER.md) para más detalles.
 
 ## 📄 Licencia
 
-Este proyecto está bajo la licencia **MIT**. Consulta el archivo [LICENSE](LICENSE) para más detalles.
+Este proyecto está bajo la licencia MIT. Consulta el archivo `LICENSE` para más detalles.
 
 ---
 
-*Creado por **Condor2026 – SpectrumSecurity** para la comunidad de ciberseguridad.*
+**Creado por Condor2026 – SpectrumSecurity para la comunidad de ciberseguridad.**
 
-¡Que los escaneos no te pillen desprevenido! 🚀
+*¡Que los escaneos no te pillen desprevenido! 🚀*
