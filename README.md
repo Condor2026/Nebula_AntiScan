@@ -24,7 +24,7 @@ Nace con una filosofía clara: *“Conocer al enemigo es el primer paso para def
 
 ## 📌 Índice
 
-- [✨ ¿Qué hace NEBULA ANTISCAN?](#-qué-hace-nebula-antiscan)
+- [✨ ¿Qué hace NEBULA ANTISCAN?](#-qué-hace-Nebula-AntiScan)
 - [⚙️ Características clave](#️-características-clave)
 - [🛠️ Tecnología y arquitectura](#️-tecnología-y-arquitectura)
 - [📊 Fuentes OSINT integradas](#-fuentes-osint-integradas)
@@ -188,7 +188,7 @@ El dashboard ofrece:
 NEBULA ANTISCAN puede integrarse con la **API de VirusTotal** (opcional). Solo necesitas:
 
 1. Obtener una clave gratuita en [VirusTotal](https://www.virustotal.com/gui/join-us) (500 consultas/día).
-2. Editar el archivo `nebula_antiscan.py` y pegar tu clave en la variable `VT_API_KEY`.
+2. Editar el archivo `Nebula_AntiScan.py` y pegar tu clave en la variable `VT_API_KEY`.
 
 Una vez configurada, tanto el comando `vt` durante el monitor como la opción 6 del menú generarán un archivo de enlaces **con resúmenes de reputación** (ej. `5/87 detecciones`).
 
@@ -208,18 +208,18 @@ Si no tienes clave, la herramienta genera solo los enlaces sin consultar la API.
 pkg update && pkg upgrade -y
 pkg install python git -y
 pip install -r requirements.txt
-git clone https://github.com/condor2026/nebula-antiscan
-cd nebula-antiscan
-python nebula-antiscan.py
+git clone https://github.com/Condor2026/Nebula-AntiScan
+cd Nebula-AntiScan
+python Nebula-AntiScan.py
 ```
 
 ### En Linux / macOS
 
 ```bash
-git clone https://github.com/condor2026/nebula-antiscan
-cd nebula-antiscan
+git clone https://github.com/Condor2026/Nebula-AntiScan
+cd Nebula-AntiScan
 pip install -r requirements.txt
-python nebula-antiscan.py
+python Nebula-AntiScan.py
 ```
 
 ### Instalación rápida con script (Linux/macOS/Termux)
@@ -227,16 +227,16 @@ python nebula-antiscan.py
 ```bash
 chmod +x install.sh
 ./install.sh
-python nebula-antiscan.py
+python Nebula-AntiScan.py
 ```
 
 ### En Linux / macOS
 
 ```bash
-git clone https://github.com/condor2026/nebula-antiscan
-cd nebula-antiscan
+git clone https://github.com/Condor2026/Nebula-AntiScan
+cd Nebula-AntiScan
 pip install -r requirements.txt
-python nebula-antiscan.py
+python Nebula-AntiScan.py
 ```
 
 > **Nota:** Si no quieres usar `git`, puedes descargar el ZIP directamente desde la página de GitHub y descomprimirlo.
