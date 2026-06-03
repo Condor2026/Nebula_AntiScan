@@ -291,10 +291,21 @@ nebula-antiscan/
 
 ## 📄 Licencia
 
-Este proyecto está bajo la licencia MIT. Consulta el archivo `LICENSE` para más detalles.
+Este proyecto está bajo la licencia **GPL v3**. Consulta el archivo `LICENSE` para más detalles.
 
 ---
 
 **Creado por Condor2026 – SpectrumSecurity para la comunidad de ciberseguridad.**
 
 *¡Que los escaneos no te pillen desprevenido! 🚀*
+
+## 💰 Apoya el proyecto
+
+NEBULA ANTISCAN es **100% código abierto** bajo licencia **GPL v3**.
+Si te es útil, considera donar para ayudar a mantenerlo y mejorarlo:
+
+- [GitHub Sponsors](https://github.com/sponsors/Condor2026)
+- [PayPal](https://paypal.me/)
+
+
+
