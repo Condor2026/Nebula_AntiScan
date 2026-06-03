@@ -1,6 +1,6 @@
 ![Version](https://img.shields.io/badge/version-1.3-blue)
 ![Release](https://img.shields.io/badge/release-stable-brightgreen)
-![License](https://img.shields.io/badge/license-MIT-green)
+![License](https://badgen.net/badge/license/GPLv3/blue)
 ![Python](https://img.shields.io/badge/python-3.8+-blue)
 ![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Termux-lightgrey)
 ![OSINT](https://img.shields.io/badge/OSINT-Sí-brightgreen)
