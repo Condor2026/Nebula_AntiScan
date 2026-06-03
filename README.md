@@ -209,7 +209,7 @@ pkg update && pkg upgrade -y
 pkg install python git -y
 pip install -r requirements.txt
 git clone https://github.com/Condor2026/Nebula_AntiScan
-cd Nebula-AntiScan
+cd Nebula_AntiScan
 python Nebula_AntiScan.py
 ```
 
@@ -217,7 +217,7 @@ python Nebula_AntiScan.py
 
 ```bash
 git clone https://github.com/Condor2026/Nebula_AntiScan
-cd Nebula-AntiScan
+cd Nebula_AntiScan
 pip install -r requirements.txt
 python Nebula_AntiScan.py
 ```
@@ -234,7 +234,7 @@ python Nebula_AntiScan.py
 
 ```bash
 git clone https://github.com/Condor2026/Nebula_AntiScan
-cd Nebula-AntiScan
+cd Nebula_AntiScan
 pip install -r requirements.txt
 python Nebula_AntiScan.py
 ```
