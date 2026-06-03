@@ -2,6 +2,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+
 NEBULA ANTISCAN v1.3 – Detector de escaneos agresivos en tiempo real
 Monitoriza y clasifica IPs maliciosas con geolocalización e inteligencia de amenazas.
 - Formato: IP | País | ASN | Organización | 🔥 botnet | 🚩 grupo | 📡 fuente
@@ -9,8 +10,8 @@ Monitoriza y clasifica IPs maliciosas con geolocalización e inteligencia de ame
 - Comandos durante monitor: vt (enlaces VirusTotal), q (salir)
 - SIN LÍMITES de IPs (muestra todas las detectadas)
 - Manejo de rangos CIDR y mejora de feeds
-
-Ejecutar: python Nebula_Mejorado.py
+  Copyright (C) 2025 Condor2026 / SpectrumSecurity
+Ejecutar: python Nebula_AntiScan.py
 """
 
 import os
@@ -905,8 +906,8 @@ def monitor_escaneos():
                     print(f"  {i+1:4}. {ip:<18} {VERDE}{pais:<15}{RESET} ASN:{AMARILLO}{asn:<12}{RESET} {AZUL}{org:<20}{RESET} 🔥{botnet_str:<30} 🚩{grupo_str}")
                 else:
                     print(f"  {i+1:4}. {ip:<18} {AMARILLO}(geolocalización no disponible){RESET}")
-            if i >= 99 and len(lista) > 100:
-                print(f"\n{AMARILLO}... y {len(lista)-100} más{RESET}")
+            if i >= 2999 and len(lista) > 3000:
+                print(f"\n{AMARILLO}... y {len(lista)-3000} más{RESET}")
                 break
 
     def guardar_ips_todas(ips, fuentes_origen):
@@ -1663,13 +1664,13 @@ def menu():
     limpiar()
     banner()
     print(f"{VERDE}╔════════════════════════════════════════════════════════════════════════════════════════╗{RESET}")
-    print(f"{VERDE}║{RESET}                                                                                        {VERDE}║{RESET}")
-    print(f"{VERDE}║{RESET}  {VERDE}1.{RESET} 🚀 Iniciar monitor en tiempo real (ciclos de 30s)                                  {VERDE}║{RESET}")
-    print(f"{VERDE}║{RESET}  {CIAN}2.{RESET} ⚡ Ejecutar un solo ciclo de escaneo (prueba rápida)                               {VERDE}║{RESET}")
+    print(f"{VERDE}║{RESET}                                                                                       {VERDE}║{RESET}")
+    print(f"{VERDE}║{RESET}  {VERDE}1.{RESET} 🚀 Iniciar monitor en tiempo real (ciclos de 30s)                                   {VERDE}║{RESET}")
+    print(f"{VERDE}║{RESET}  {CIAN}2.{RESET} ⚡ Ejecutar un solo ciclo de escaneo (prueba rápida)                                {VERDE}║{RESET}")
     print(f"{VERDE}║{RESET}  {AMARILLO}3.{RESET} 📊 Ver estadísticas globales (top países, ASN, botnets, grupos)                    {VERDE}║{RESET}")
     print(f"{VERDE}║{RESET}  {AZUL}4.{RESET} 📰 Ver últimas 50 IPs detectadas                                                   {VERDE}║{RESET}")
     print(f"{VERDE}║{RESET}  {MAGENTA}5.{RESET} 🌐 Iniciar servidor web (dashboard cyberpunk)                                      {VERDE}║{RESET}")
-    print(f"{VERDE}║{RESET}  {CIAN}6.{RESET} 🔗 Generar enlaces VirusTotal (con API si hay clave)                               {VERDE}║{RESET}")
+    print(f"{VERDE}║{RESET}  {CIAN}6.{RESET} 🔗 Generar enlaces VirusTotal (con API si hay clave)                                {VERDE}║{RESET}")
     print(f"{VERDE}║{RESET}  {ROJO}7.{RESET} 🚪 Salir                                                                           {VERDE}║{RESET}")
     print(f"{VERDE}║{RESET}                                                                                        {VERDE}║{RESET}")
     print(f"{VERDE}╚════════════════════════════════════════════════════════════════════════════════════════╝{RESET}")
