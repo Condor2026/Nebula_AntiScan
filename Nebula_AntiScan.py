@@ -229,7 +229,7 @@ def guardar_ultimas_ips(datos):
         json.dump(datos, f, indent=2, ensure_ascii=False)
     print(f"{VERDE}📁 JSON guardado en {ULTIMAS_IPS_JSON} ({len(datos)} IPs){RESET}")
 
-# ================= FUENTES DE ESCANEOS (73 FUENTES) =================
+# ================= FUENTES DE ESCANEOS (40 FUENTES) =================
 FUENTES = [
     {"nombre": "Blocklist.de (ssh)", "url": "https://lists.blocklist.de/lists/ssh.txt"},
     {"nombre": "Blocklist.de (ftp)", "url": "https://lists.blocklist.de/lists/ftp.txt"},
