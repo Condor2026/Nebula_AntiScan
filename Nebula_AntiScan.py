@@ -1,7 +1,7 @@
-
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+
 NEBULA ANTISCAN v1.3 – Detector de escaneos agresivos en tiempo real
 Monitoriza y clasifica IPs maliciosas con geolocalización e inteligencia de amenazas.
 - Formato: IP | País | ASN | Organización | 🔥 botnet | 🚩 grupo | 📡 fuente
@@ -11,6 +11,7 @@ Monitoriza y clasifica IPs maliciosas con geolocalización e inteligencia de ame
 - Manejo de rangos CIDR y mejora de feeds
 
 Ejecutar: python Nebula_AntiScan.py
+
 """
 
 import os
