@@ -907,8 +907,8 @@ def monitor_escaneos():
                     print(f"  {i+1:4}. {ip:<18} {VERDE}{pais:<15}{RESET} ASN:{AMARILLO}{asn:<12}{RESET} {AZUL}{org:<20}{RESET} 🔥{botnet_str:<30} 🚩{grupo_str}")
                 else:
                     print(f"  {i+1:4}. {ip:<18} {AMARILLO}(geolocalización no disponible){RESET}")
-            if i >= 99 and len(lista) > 100:
-                print(f"\n{AMARILLO}... y {len(lista)-100} más{RESET}")
+            if i >= 2999 and len(lista) > 3000:   # ← límite de impresión en 3000
+                print(f"\n{AMARILLO}... y {len(lista)-3000} más{RESET}")
                 break
 
     def guardar_ips_todas(ips, fuentes_origen):
@@ -922,8 +922,6 @@ def monitor_escaneos():
                     for ip in sorted(ips):
                         fuente = fuentes_origen.get(ip, "")
                         f.write(f"{ip} # {fuente}\n")
-                else:
-                    f.write("# No se obtuvieron IPs en este ciclo\n")
             print(f"{VERDE}✅ Datos añadidos a {archivo}{RESET}")
         except Exception as e:
             print(f"{ROJO}❌ Error: {e}{RESET}")
@@ -956,10 +954,16 @@ def monitor_escaneos():
             time.sleep(0.5)
 
         ultimas_ips = nuevas_ips
+
+        # 🔥 LIMITAR EL NÚMERO DE IPs A PROCESAR (para que no se cuelgue)
+        MAX_IPS = 10000
+        if len(ultimas_ips) > MAX_IPS:
+            ultimas_ips = set(list(ultimas_ips)[:MAX_IPS])
+            print(f"{AMARILLO}⚠ Limitando a {MAX_IPS} IPs (había {len(nuevas_ips)}){RESET}")
+
         mostrar_ips(ultimas_ips, fuentes_origen)
         guardar_ips_todas(ultimas_ips, fuentes_origen)
 
-        # Guardar en JSON para el dashboard
         datos_ip = []
         for ip in ultimas_ips:
             if '/' not in ip:
