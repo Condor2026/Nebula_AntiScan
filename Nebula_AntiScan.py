@@ -1545,7 +1545,7 @@ def iniciar_web():
     print(f"   📍 Local:   http://localhost:{PUERTO_WEB}")
     print(f"   📍 Red:     http://{ip}:{PUERTO_WEB}")
     print(f"{AMARILLO}Presiona Ctrl+C para volver al menú{RESET}\n")
-    app.run(host='0.0.0.0', port=PUERTO_WEB, debug=False, use_reloader=False)
+    app.run(host='127.0.0.1', port=PUERTO_WEB, debug=False, use_reloader=False)
 
 # ================= CICLO ÚNICO (PRUEBA RÁPIDA) =================
 def ciclo_unico():
@@ -1669,9 +1669,9 @@ def menu():
     limpiar()
     banner()
     print(f"{VERDE}╔════════════════════════════════════════════════════════════════════════════════════════╗{RESET}")
-    print(f"{VERDE}║{RESET}                                                                                         {VERDE}║{RESET}")
-    print(f"{VERDE}║{RESET}  {VERDE}1.{RESET} 🚀 Iniciar monitor en tiempo real (ciclos de 30s)                                 {VERDE}║{RESET}")
-    print(f"{VERDE}║{RESET}  {CIAN}2.{RESET} ⚡ Ejecutar un solo ciclo de escaneo (prueba rápida)                              {VERDE}║{RESET}")
+    print(f"{VERDE}║{RESET}                                                                                        {VERDE}║{RESET}")
+    print(f"{VERDE}║{RESET}  {VERDE}1.{RESET} 🚀 Iniciar monitor en tiempo real (ciclos de 30s)                                  {VERDE}║{RESET}")
+    print(f"{VERDE}║{RESET}  {CIAN}2.{RESET} ⚡ Ejecutar un solo ciclo de escaneo (prueba rápida)                               {VERDE}║{RESET}")
     print(f"{VERDE}║{RESET}  {AMARILLO}3.{RESET} 📊 Ver estadísticas globales (top países, ASN, botnets, grupos)                    {VERDE}║{RESET}")
     print(f"{VERDE}║{RESET}  {AZUL}4.{RESET} 📰 Ver últimas 50 IPs detectadas                                                   {VERDE}║{RESET}")
     print(f"{VERDE}║{RESET}  {MAGENTA}5.{RESET} 🌐 Iniciar servidor web (dashboard cyberpunk)                                      {VERDE}║{RESET}")
