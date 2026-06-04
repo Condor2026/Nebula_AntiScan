@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 """
 
 NEBULA ANTISCAN v1.3 – Detector de escaneos agresivos en tiempo real
