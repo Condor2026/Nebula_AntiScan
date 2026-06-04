@@ -10,7 +10,7 @@ Monitoriza y clasifica IPs maliciosas con geolocalización e inteligencia de ame
 - SIN LÍMITES de IPs (muestra todas las detectadas)
 - Manejo de rangos CIDR y mejora de feeds
 
-Ejecutar: python Nebula_Mejorado.py
+Ejecutar: python Nebula_AntiScan.py
 """
 
 import os
