@@ -1637,7 +1637,7 @@ def menu():
     print(f"{VERDE}║{RESET}  {AMARILLO}3.{RESET} 📊 Ver estadísticas globales (top países, ASN, botnets, grupos)                    {VERDE}║{RESET}")
     print(f"{VERDE}║{RESET}  {AZUL}4.{RESET} 📰 Ver últimas 50 IPs detectadas                                                   {VERDE}║{RESET}")
     print(f"{VERDE}║{RESET}  {MAGENTA}5.{RESET} 🌐 Iniciar servidor web (dashboard cyberpunk)                                      {VERDE}║{RESET}")
-    print(f"{VERDE}║{RESET}  {CIAN}6.{RESET} 🔗 Generar enlaces VirusTotal (con API si hay clave)                              {VERDE}║{RESET}")
+    print(f"{VERDE}║{RESET}  {CIAN}6.{RESET} 🔗 Generar enlaces VirusTotal (con API si hay clave)                               {VERDE}║{RESET}")
     print(f"{VERDE}║{RESET}  {ROJO}7.{RESET} 🚪 Salir                                                                           {VERDE}║{RESET}")
     print(f"{VERDE}║{RESET}                                                                                        {VERDE}║{RESET}")
     print(f"{VERDE}╚════════════════════════════════════════════════════════════════════════════════════════╝{RESET}")
