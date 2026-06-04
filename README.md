@@ -20,6 +20,11 @@ Nace con una filosofía clara: *“Conocer al enemigo es el primer paso para def
 
 > **Nota importante:** NEBULA ANTISCAN detecta IPs que realizan **escaneos de puertos, bruteforce y actividades de reconocimiento**. No está diseñada para detectar ataques de denegación de servicio (DDoS), porque sus fuentes se centran en comportamientos de intrusión, no de saturación de ancho de banda.
 
+
+Nebula – Demo de Detección de Amenazas (Malware, Killnet IPs, Escaneos Agresivos)
+⚠️ Nebula es una demostración pública limitada de un sistema de contra-inteligencia más amplio (no publicado).
+Muestra solo una fracción de las capacidades reales. No incluye el motor completo de correlación, el panel de análisis avanzado ni la inteligencia en tiempo real del sistema privado.
+
 ---
 
 ## 📌 Índice
