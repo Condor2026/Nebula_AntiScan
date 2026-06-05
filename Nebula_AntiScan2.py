@@ -269,6 +269,10 @@ def cargar_historico():
 
 # ================= FUENTES DE ESCANEOS =================
 FUENTES = [
+    {"nombre": "Killnet Proxies", "url": "https://raw.githubusercontent.com/securityscorecard/SSC-Threat-Intel-IoCs/master/KillNet-DDoS-Blocklist/proxylist.txt"},
+    {"nombre": "Killnet Extra", "url": "https://raw.githubusercontent.com/securityscorecard/SSC-Threat-Intel-IoCs/master/KillNet-DDoS-Blocklist/proxylist.txt"},
+    {"nombre": "NoName057(16) IPs", "url": "https://raw.githubusercontent.com/govcert-ch/CTI/main/20240615_NoName057-attacking-ips.csv"},
+    {"nombre": "NoName057(16) CIDRs", "url": "https://raw.githubusercontent.com/govcert-ch/CTI/main/20240615_NoName057-attacking-ips.csv"},
     {"nombre": "Blocklist.de (ssh)", "url": "https://lists.blocklist.de/lists/ssh.txt"},
     {"nombre": "Blocklist.de (ftp)", "url": "https://lists.blocklist.de/lists/ftp.txt"},
     {"nombre": "Blocklist.de (bots)", "url": "https://lists.blocklist.de/lists/bots.txt"},
