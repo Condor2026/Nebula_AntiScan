@@ -331,7 +331,6 @@ INTEL_FEEDS = [
     ("https://www.cybercure.ai/feed", "cybercure.txt"),
     ("https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout_1d.ipset", "botscout.txt"),
     ("https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/coinbl.txt", "coinbl.txt"),
-    ("https://raw.githubusercontent.com/hagezi/dns-blocklists/main/ips/pro.txt", "hagezi_pro.txt"),
     ("https://dataplane.org/dnsrd.txt", "dataplane_dnsrd.txt"),
     ("https://github.com/moimran/blacklist-IP/raw/main/blacklist.txt", "moimran.txt"),
     ("https://raw.githubusercontent.com/kraloveckey/threat-intelligence-feeds/main/ips.txt", "kraloveckey.txt"),
