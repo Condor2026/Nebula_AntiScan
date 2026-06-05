@@ -14,8 +14,9 @@
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)
 
 <p align="center">
-  <img src="https://github-readme-typing-svg.vercel.app?font=Fira+Code&weight=600&size=28&duration=3000&pause=500&color=00FF9D&center=true&vCenter=true&width=600&lines=NEBULA+ANTISCAN+v2.0;DETECTOR+DE+ESCANEOS+AGRESIVOS;93.000+IPs+ÚNICAS;31+FUENTES+OSINT;80+FEEDS+DE+INTELIGENCIA" alt="Nebula Banner" />
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=28&duration=3000&pause=500&color=00FF00&center=true&vCenter=true&width=600&lines=Condor2026+%7C+Threat+Hunter;OSINT+%7C+Purple+Team;Andr%C3%B3meda+%5BPrivado%5D;Nebula+%5BP%C3%BAblico%5D;Anonimato+como+escudo" alt="Typing animation" />
 </p>
+
 
 **NEBULA ANTISCAN** es la demo de Andromeda.
 
