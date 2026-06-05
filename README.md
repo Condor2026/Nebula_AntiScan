@@ -30,7 +30,7 @@ Muestra solo una fracción de las capacidades reales. No incluye el motor comple
 ## 📌 Índice
 
 - [✨ ¿Qué hace NEBULA ANTISCAN?](#-qué-hace-Nebula-AntiScan)
-- [⚙️ Características clave](#️-características-clave)
+- [⚙️ Características clave](#️-características-clave)2
 - [🛠️ Tecnología y arquitectura](#️-tecnología-y-arquitectura)
 - [📊 Fuentes OSINT integradas](#-fuentes-osint-integradas)
 - [🧠 Inteligencia de amenazas](#-inteligencia-de-amenazas)
@@ -213,18 +213,18 @@ Si no tienes clave, la herramienta genera solo los enlaces sin consultar la API.
 pkg update && pkg upgrade -y
 pkg install python git -y
 pip install -r requirements.txt
-git clone https://github.com/Condor2026/Nebula_AntiScan
-cd Nebula_AntiScan
-python Nebula_AntiScan.py
+git clone https://github.com/Condor2026/Nebula_AntiScan2
+cd Nebula_AntiScan2
+python Nebula_AntiScan2.py
 ```
 
 ### En Linux / macOS
 
 ```bash
-git clone https://github.com/Condor2026/Nebula_AntiScan
-cd Nebula_AntiScan
+git clone https://github.com/Condor2026/Nebula_AntiScan2
+cd Nebula_AntiScan2
 pip install -r requirements.txt
-python Nebula_AntiScan.py
+python Nebula_AntiScan2.py
 ```
 
 ### Instalación rápida con script (Linux/macOS/Termux)
@@ -232,16 +232,16 @@ python Nebula_AntiScan.py
 ```bash
 chmod +x install.sh
 ./install.sh
-python Nebula_AntiScan.py
+python Nebula_AntiScan2.py
 ```
 
 ### En Linux / macOS
 
 ```bash
 git clone https://github.com/Condor2026/Nebula_AntiScan
-cd Nebula_AntiScan
+cd Nebula_AntiScan2
 pip install -r requirements.txt
-python Nebula_AntiScan.py
+python Nebula_AntiScan2.py
 ```
 
 > **Nota:** Si no quieres usar `git`, puedes descargar el ZIP directamente desde la página de GitHub y descomprimirlo.
@@ -257,7 +257,7 @@ nebula-antiscan/
 ├── DISCLAIMER.md
 ├── requirements.txt
 ├── install.sh
-├── nebula.py                      # Código principal (monolítico)
+├── Nebula_AntiScan2.py             # Código principal (monolítico)
 └── images/
     └── arquitectura.png           # Diagrama de arquitectura
 ```
