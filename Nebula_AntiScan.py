@@ -352,7 +352,7 @@ INTEL_FEEDS = [
     ("https://www.cybercure.ai/feed", "cybercure.txt"),
     ("https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout_1d.ipset", "botscout.txt"),
     ("https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/coinbl.txt", "coinbl.txt"),
-    ("https://raw.githubusercontent.com/hagezi/dns-blocklists/main/ips/pro.txt", "hagezi_pro.txt")
+    ("https://raw.githubusercontent.com/hagezi/dns-blocklists/main/ips/pro.txt", "hagezi_pro.txt"),
     ("https://dataplane.org/dnsrd.txt", "dataplane_dnsrd.txt"),
     ("https://dataplane.org/dnsrdany.txt", "dataplane_dnsrdany.txt"),
     ("https://dataplane.org/smtp.txt", "dataplane_smtp.txt"),
