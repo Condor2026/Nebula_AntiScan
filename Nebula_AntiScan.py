@@ -229,7 +229,7 @@ def guardar_ultimas_ips(datos):
         json.dump(datos, f, indent=2, ensure_ascii=False)
     print(f"{VERDE}📁 JSON guardado en {ULTIMAS_IPS_JSON} ({len(datos)} IPs){RESET}")
 
-# ================= FUENTES DE ESCANEOS (40 FUENTES) =================
+# ================= FUENTES DE ESCANEOS (31 FUENTES) =================
 FUENTES = [
     {"nombre": "Blocklist.de (ssh)", "url": "https://lists.blocklist.de/lists/ssh.txt"},
     {"nombre": "Blocklist.de (ftp)", "url": "https://lists.blocklist.de/lists/ftp.txt"},
@@ -246,14 +246,11 @@ FUENTES = [
     {"nombre": "IPsum", "url": "https://raw.githubusercontent.com/stamparm/ipsum/master/ipsum.txt"},
     {"nombre": "BinaryDefense", "url": "https://www.binarydefense.com/banlist.txt"},
     {"nombre": "Feodo Tracker", "url": "https://feodotracker.abuse.ch/downloads/ipblocklist.txt"},
-    {"nombre": "Bitwire Inbound", "url": "https://raw.githubusercontent.com/bitwire-it/ipblocklist/main/inbound.txt"},
-    {"nombre": "Bitwire Outbound", "url": "https://raw.githubusercontent.com/bitwire-it/ipblocklist/main/outbound.txt"},
     {"nombre": "ThreatFox", "url": "https://raw.githubusercontent.com/elliotwutingfeng/ThreatFox-IOC-IPs/main/ips.txt"},
     {"nombre": "Phishing DB", "url": "https://raw.githubusercontent.com/mitchellkrogza/Phishing.Database/master/phishing-IPs-ACTIVE.txt"},
     {"nombre": "FireHOL Level2", "url": "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/firehol_level2.netset"},
     {"nombre": "FireHOL Level3", "url": "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/firehol_level3.netset"},
     {"nombre": "IPsum Level3", "url": "https://raw.githubusercontent.com/stamparm/ipsum/master/levels/3.txt"},
-    {"nombre": "Ellio Tech", "url": "https://feed.ellio.tech"},
     {"nombre": "SBLAM", "url": "https://sblam.com/blacklist.txt"},
     {"nombre": "DarkList", "url": "http://www.darklist.de/raw.php"},
     {"nombre": "StopForumSpam", "url": "https://www.stopforumspam.com/downloads/toxic_ip_cidr.txt"},
@@ -266,8 +263,6 @@ FUENTES = [
     {"nombre": "IPsum Level7", "url": "https://raw.githubusercontent.com/stamparm/ipsum/master/levels/7.txt"},
     {"nombre": "Dataplane DNS RD", "url": "https://dataplane.org/dnsrd.txt"},
     {"nombre": "Dataplane DNS RD Any", "url": "https://dataplane.org/dnsrdany.txt"},
-    {"nombre": "RomainMarcoux Full AB", "url": "https://raw.githubusercontent.com/romainmarcoux/malicious-ip/main/full-ab.txt"},
-    {"nombre": "RomainMarcoux Full AC", "url": "https://raw.githubusercontent.com/romainmarcoux/malicious-ip/main/full-ac.txt"},
 ]
 
 def normalizar_ip(ip_str):
