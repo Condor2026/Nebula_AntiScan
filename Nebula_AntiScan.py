@@ -3,15 +3,23 @@
 
 """
 
-NEBULA ANTISCAN v1.3 – Detector de escaneos agresivos en tiempo real
-Monitoriza y clasifica IPs maliciosas con geolocalización e inteligencia de amenazas.
-- Formato: IP | País | ASN | Organización | 🔥 botnet | 🚩 grupo | 📡 fuente
-- Dashboard web cyberpunk con estadísticas, paginación, gráficos interactivos y panel de contexto
-- Comandos durante monitor: vt (enlaces VirusTotal), q (salir)
-- SIN LÍMITES de IPs (muestra todas las detectadas)
-- Manejo de rangos CIDR y mejora de feeds
+NEBULA ANTISCAN v2.0 – Detector de escaneos agresivos en tiempo real
+MEJORAS:
+- Paginación en frontend (ya existente, optimizada)
+- Análisis de contexto más detallado
+- Evolución temporal: 7d, 1m, 2m, 3m, toda la evolución
+- Gráfico secundario tipo tarta (top países)
+- Buscador de IP para ver si ha aparecido en escaneos
+- Historial persistente (evolución real)
 
-Ejecutar: python Nebula_AntiScan.py
+Monitoriza y clasifica IPs maliciosas con geolocalización e inteligencia de amenazas.
+Formato: IP | País | ASN | Organización | 🔥 botnet | 🚩 grupo | 📡 fuente
+Dashboard web cyberpunk con estadísticas, paginación, gráficos interactivos y panel de contexto
+Comandos durante monitor: vt (enlaces VirusTotal), q (salir)
+SIN LÍMITES de IPs (muestra todas las detectadas)
+Manejo de rangos CIDR y mejora de feeds
+
+Ejecutar: python Nebula_AntiScan2.py
 
 """
 
@@ -25,9 +33,9 @@ import re
 import socket
 import ipaddress
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import Counter
-from flask import Flask, render_template_string, jsonify, send_file
+from flask import Flask, render_template_string, jsonify, send_file, request
 
 # ================= CONFIGURACIÓN =================
 PUERTO_WEB = 5091
@@ -40,6 +48,7 @@ os.makedirs(DATOS_DIR, exist_ok=True)
 os.makedirs(INTEL_DIR, exist_ok=True)
 
 ULTIMAS_IPS_JSON = os.path.join(DATOS_DIR, "ultimas_ips_escaneos.json")
+HISTORICO_JSON = os.path.join(DATOS_DIR, "historico_escaneos.json")
 
 # ================= COLORES ANSI =================
 VERDE = "\033[92m"
@@ -50,8 +59,6 @@ MAGENTA = "\033[95m"
 CIAN = "\033[96m"
 RESET = "\033[0m"
 NEGRITA = "\033[1m"
-
-app = Flask(__name__)
 
 # ================= USER AGENTS (130 ÚNICOS) =================
 USER_AGENTS = [
@@ -229,7 +236,38 @@ def guardar_ultimas_ips(datos):
         json.dump(datos, f, indent=2, ensure_ascii=False)
     print(f"{VERDE}📁 JSON guardado en {ULTIMAS_IPS_JSON} ({len(datos)} IPs){RESET}")
 
-# ================= FUENTES DE ESCANEOS (31 FUENTES) =================
+def guardar_historico(ips_con_datos):
+    if not ips_con_datos:
+        return
+    historico = []
+    if os.path.exists(HISTORICO_JSON):
+        try:
+            with open(HISTORICO_JSON, 'r', encoding='utf-8') as f:
+                historico = json.load(f)
+        except:
+            pass
+    entradas_existentes = {(item['ip'], item['ultima_vista'][:10]) for item in historico}
+    for item in ips_con_datos:
+        clave = (item['ip'], item['ultima_vista'][:10])
+        if clave not in entradas_existentes:
+            historico.append(item)
+            entradas_existentes.add(clave)
+    historico.sort(key=lambda x: x.get('ultima_vista', ''), reverse=True)
+    if len(historico) > 50000:
+        historico = historico[:50000]
+    with open(HISTORICO_JSON, 'w', encoding='utf-8') as f:
+        json.dump(historico, f, indent=2, ensure_ascii=False)
+
+def cargar_historico():
+    if os.path.exists(HISTORICO_JSON):
+        try:
+            with open(HISTORICO_JSON, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
+            return []
+    return []
+
+# ================= FUENTES DE ESCANEOS =================
 FUENTES = [
     {"nombre": "Blocklist.de (ssh)", "url": "https://lists.blocklist.de/lists/ssh.txt"},
     {"nombre": "Blocklist.de (ftp)", "url": "https://lists.blocklist.de/lists/ftp.txt"},
@@ -302,7 +340,7 @@ def descargar_fuente(fuente):
         print(f"{ROJO}  [!] Error: {e}{RESET}")
     return ips
 
-# ================= INTELIGENCIA DE AMENAZAS (FEEDS ADICIONALES) =================
+# ================= INTELIGENCIA DE AMENAZAS =================
 INTEL_FEEDS = [
     ("https://raw.githubusercontent.com/securityscorecard/SSC-Threat-Intel-IoCs/master/KillNet-DDoS-Blocklist/proxylist.txt", "killnet_proxies.txt"),
     ("https://raw.githubusercontent.com/elliotwutingfeng/ThreatFox-IOC-IPs/main/ips.txt", "threatfox_ips.txt"),
@@ -426,7 +464,6 @@ def cargar_intel_en_memoria():
             continue
         nombre_lower = archivo.lower()
 
-        # Clasificación
         if 'killnet' in nombre_lower:
             with open(ruta, 'r', encoding='utf-8', errors='ignore') as f:
                 for line in f:
@@ -738,7 +775,7 @@ def actualizar_intel_inicial():
 
 def actualizador_intel_silencioso():
     while True:
-        time.sleep(21600)  # cada 6 horas
+        time.sleep(21600)
         for url, nombre in INTEL_FEEDS:
             try:
                 headers = {'User-Agent': obtener_user_agent()}
@@ -794,6 +831,727 @@ def generar_enlaces_vt(ips, usar_api=False):
     except Exception as e:
         print(f"{ROJO}❌ Error: {e}{RESET}")
 
+# ================= SERVIDOR WEB (DASHBOARD CYBERPUNK MEJORADO) =================
+app = Flask(__name__)
+
+def obtener_ip_local():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except:
+        return "127.0.0.1"
+
+@app.route('/')
+def index():
+    return render_template_string(r"""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEBULA ANTISCAN v2 · Cyber Threat Detection</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Inter', sans-serif;
+    background: #0a0c15;
+    color: #e0e5f0;
+    padding: 2rem 1rem;
+    position: relative;
+    overflow-x: hidden;
+}
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent 95%, rgba(0,255,157,0.02) 50%),
+                linear-gradient(0deg, transparent 95%, rgba(255,107,74,0.02) 50%);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: -1;
+}
+.container { max-width: 1600px; margin: 0 auto; }
+h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    text-align: center;
+    background: linear-gradient(135deg, #00ff9d, #ff6b4a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 1px;
+}
+.subtitle {
+    text-align: center;
+    color: #8892b0;
+    margin-bottom: 2rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+}
+.context-panel {
+    background: rgba(0,0,0,0.6);
+    border-left: 4px solid #ff6b4a;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+}
+.context-panel h3 { color: #ff6b4a; margin-bottom: 0.5rem; }
+.context-panel ul { margin-left: 1.5rem; color: #a0b0d0; }
+.context-panel li { margin: 0.3rem 0; }
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+.stat-card {
+    background: rgba(20,25,35,0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0,255,157,0.2);
+    border-radius: 20px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    border-top: 3px solid;
+    cursor: pointer;
+}
+.stat-card:hover { transform: translateY(-5px); border-color: #00ff9d; }
+.stat-card.ips { border-top-color: #00ff9d; }
+.stat-card.paises { border-top-color: #ff6b4a; }
+.stat-card.asns { border-top-color: #4a9eff; }
+.stat-card.botnets { border-top-color: #ffaa00; }
+.stat-card.grupos { border-top-color: #ff00ff; }
+.stat-card h2 { font-size: 2rem; font-weight: 700; color: #00ff9d; }
+.stat-card p { color: #8892b0; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px; margin-top: 0.5rem; }
+.stat-card .expand-hint { font-size: 0.65rem; color: #ff6b4a; margin-top: 0.5rem; display: none; }
+.stat-card:hover .expand-hint { display: block; }
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.8);
+    backdrop-filter: blur(5px);
+}
+.modal-content {
+    background: #0f121c;
+    margin: 5% auto;
+    padding: 2rem;
+    border: 1px solid #00ff9d;
+    border-radius: 20px;
+    width: 80%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    color: #e0e5f0;
+    position: relative;
+}
+.modal-content h3 { color: #ff6b4a; margin-bottom: 1rem; font-size: 1.5rem; }
+.modal-content ul { list-style: none; padding: 0; }
+.modal-content li { padding: 0.5rem; border-bottom: 1px solid rgba(0,255,157,0.2); display: flex; justify-content: space-between; }
+.modal-content li span:first-child { font-weight: 600; }
+.modal-content li span:last-child { color: #00ff9d; }
+.close { position: absolute; right: 1.5rem; top: 1rem; color: #ff6b4a; font-size: 2rem; cursor: pointer; }
+.close:hover { color: #00ff9d; }
+.controls-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    justify-content: space-between;
+    align-items: center;
+}
+.filters { display: flex; flex-wrap: wrap; gap: 0.8rem; }
+.filter-btn, .range-btn {
+    background: rgba(30,35,50,0.9);
+    border: 1px solid rgba(0,255,157,0.3);
+    color: #a0b0d0;
+    padding: 0.5rem 1rem;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+}
+.filter-btn:hover, .filter-btn.active, .range-btn:hover, .range-btn.active {
+    background: #00ff9d;
+    color: #0a0c15;
+    border-color: #00ff9d;
+}
+.refresh-btn, .search-btn {
+    background: rgba(30,35,50,0.9);
+    border: 1px solid rgba(255,107,74,0.5);
+    color: #ff6b4a;
+    padding: 0.5rem 1.2rem;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.refresh-btn:hover, .search-btn:hover { background: #ff6b4a; color: #0a0c15; }
+.search-box {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+.search-box input {
+    background: rgba(20,25,35,0.9);
+    border: 1px solid rgba(0,255,157,0.3);
+    padding: 0.5rem 1rem;
+    border-radius: 30px;
+    color: #e0e5f0;
+    font-family: monospace;
+}
+.search-box input:focus { outline: none; border-color: #00ff9d; }
+.charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.chart-container {
+    background: rgba(20,25,35,0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0,255,157,0.2);
+    border-radius: 20px;
+    padding: 1.5rem;
+}
+.chart-container h3 { color: #ff6b4a; margin-bottom: 1rem; font-size: 1.1rem; }
+.range-selector { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+canvas { max-height: 300px; width: 100%; }
+.card {
+    background: rgba(20,25,35,0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0,255,157,0.2);
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+.card-header {
+    background: rgba(0,0,0,0.5);
+    border-bottom: 1px solid rgba(255,107,74,0.3);
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+.card-header h3 { color: #ff6b4a; font-size: 1.1rem; }
+.download-link {
+    color: #00ff9d;
+    text-decoration: none;
+    border: 1px solid #00ff9d;
+    padding: 0.4rem 1rem;
+    border-radius: 30px;
+    font-size: 0.8rem;
+}
+.download-link:hover { background: #00ff9d; color: #0a0c15; }
+.table-container { overflow-x: auto; padding: 0 1.5rem 1.5rem 1.5rem; }
+table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+th { background: rgba(30,35,50,0.8); color: #00ff9d; padding: 0.8rem 0.5rem; text-align: left; font-weight: 600; }
+td { padding: 0.7rem 0.5rem; border-bottom: 1px solid rgba(255,107,74,0.15); }
+tr:hover { background: rgba(0,255,157,0.05); }
+.ip { font-family: monospace; color: #00ff9d; font-weight: 600; }
+.asn { color: #ffaa00; font-family: monospace; }
+.org { color: #4a9eff; }
+.badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: rgba(0,255,157,0.1);
+    border: 1px solid #00ff9d;
+    color: #00ff9d;
+}
+.badge-botnet { background: rgba(255,107,74,0.15); border-color: #ff6b4a; color: #ff6b4a; }
+.badge-grupo { background: rgba(255,107,74,0.15); border-color: #ff6b4a; color: #ff6b4a; }
+.badge-fuente { background: rgba(74,158,255,0.15); border-color: #4a9eff; color: #4a9eff; }
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+.page-btn {
+    background: rgba(30,35,50,0.9);
+    border: 1px solid rgba(0,255,157,0.3);
+    color: #e0e5f0;
+    padding: 0.4rem 0.9rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+.page-btn:hover, .page-btn.active { background: #00ff9d; color: #0a0c15; border-color: #00ff9d; }
+.page-btn.disabled { opacity: 0.3; cursor: not-allowed; }
+.footer { margin-top: 2rem; text-align: center; color: #3a4450; font-size: 0.75rem; }
+@media (max-width: 768px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-row { grid-template-columns: 1fr; }
+    h1 { font-size: 1.8rem; }
+    .modal-content { width: 95%; margin: 10% auto; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>★ NEBULA ANTISCAN ★ v2.0</h1>
+<div class="subtitle">AGGRESSIVE SCAN DETECTION · REAL-TIME THREAT INTELLIGENCE</div>
+
+<div class="context-panel" id="context-panel">
+    <h3>📊 Análisis de Contexto Mejorado</h3>
+    <div id="context-insights">Cargando inteligencia...</div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card ips" onclick="showModal('total')">
+        <h2 id="total-ips">0</h2><p>IPs ÚNICAS</p><div class="expand-hint">🔍 Haz clic para ver detalles</div>
+    </div>
+    <div class="stat-card paises" onclick="showModal('paises')">
+        <h2 id="total-paises">0</h2><p>PAÍSES</p><div class="expand-hint">🔍 Haz clic para ver top 20</div>
+    </div>
+    <div class="stat-card asns" onclick="showModal('asns')">
+        <h2 id="total-asns">0</h2><p>ASN DISTINTOS</p><div class="expand-hint">🔍 Haz clic para ver top 20</div>
+    </div>
+    <div class="stat-card botnets" onclick="showModal('botnets')">
+        <h2 id="total-botnets">0</h2><p>BOTNETS</p><div class="expand-hint">🔍 Haz clic para ver top 20</div>
+    </div>
+    <div class="stat-card grupos" onclick="showModal('grupos')">
+        <h2 id="total-grupos">0</h2><p>GRUPOS</p><div class="expand-hint">🔍 Haz clic para ver top 20</div>
+    </div>
+</div>
+
+<div id="statsModal" class="modal">
+    <div class="modal-content"><span class="close" onclick="closeModal()">&times;</span><h3 id="modalTitle">Estadísticas</h3><ul id="modalList"></ul></div>
+</div>
+
+<div class="controls-bar">
+    <div class="filters" id="filters">
+        <button class="filter-btn active" data-filter="all">🌍 Todas</button>
+        <button class="filter-btn" data-filter="botnet">🔥 Con botnet</button>
+        <button class="filter-btn" data-filter="grupo">🚩 Con grupo</button>
+        <button class="filter-btn" data-filter="fuente">📡 Por fuente origen</button>
+    </div>
+    <div class="search-box">
+        <input type="text" id="ip-search" placeholder="Buscar IP (ej. 192.168.1.1)" style="font-family: monospace;">
+        <button id="search-ip-btn" class="search-btn">🔍 Buscar</button>
+    </div>
+    <button class="refresh-btn" id="manual-refresh">🔄 Actualizar ahora</button>
+</div>
+
+<div class="charts-row">
+    <div class="chart-container">
+        <h3>📈 Evolución temporal</h3>
+        <div class="range-selector" id="timeline-range">
+            <button class="range-btn active" data-range="7d">7 días</button>
+            <button class="range-btn" data-range="1m">1 mes</button>
+            <button class="range-btn" data-range="2m">2 meses</button>
+            <button class="range-btn" data-range="3m">3 meses</button>
+            <button class="range-btn" data-range="all">Toda la evolución</button>
+        </div>
+        <canvas id="timelineChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <h3>🥧 Top países (tarta)</h3>
+        <canvas id="pieChart"></canvas>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>🌐 ÚLTIMAS IPs DETECTADAS</h3>
+        <a href="/download-json" class="download-link">📥 DESCARGAR JSON</a>
+    </div>
+    <div class="table-container">
+        <table id="ip-table">
+            <thead>
+                <tr><th>#</th><th>IP</th><th>PAÍS</th><th>ASN</th><th>ORGANIZACIÓN</th><th>🔥 BOTNET</th><th>🚩 GRUPO</th><th>📡 FUENTE</th><th>ÚLTIMA VEZ</th></tr>
+            </thead>
+            <tbody id="ip-tbody"><tr><td colspan="9" style="text-align:center; padding:2rem;">Cargando datos...</td></tr></tbody>
+        </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+</div>
+<div class="footer"><p>73 fuentes OSINT · 80+ feeds inteligencia · Grupos APT/Ransomware/Hacktivistas · Actualización cada 30s · 🛡 Condor2026</p></div>
+</div>
+
+<script>
+let currentPage = 1, itemsPerPage = 30, allData = [], currentFilter = 'all', timelineChart = null, pieChart = null;
+let currentTimelineRange = '7d';
+
+function getFlagEmoji(c) {
+    if (!c || c.length !== 2) return '🌐';
+    return String.fromCodePoint(...c.toUpperCase().split('').map(c => 127397 + c.charCodeAt()));
+}
+
+function formatDate(i) {
+    if (!i) return '';
+    const d = new Date(i);
+    return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + ' ' + d.toLocaleDateString([], {day:'2-digit', month:'2-digit'});
+}
+
+function updateStats(d) {
+    const total = d.length;
+    const paises = new Set(d.map(i => i.codigo_pais).filter(c => c));
+    const asns = new Set(d.map(i => i.asn).filter(a => a));
+    const botnets = d.filter(i => i.botnet && i.botnet !== '-').length;
+    const grupos = d.filter(i => i.grupo && i.grupo !== '-').length;
+
+    document.getElementById('total-ips').textContent = total;
+    document.getElementById('total-paises').textContent = paises.size;
+    document.getElementById('total-asns').textContent = asns.size;
+    document.getElementById('total-botnets').textContent = botnets;
+    document.getElementById('total-grupos').textContent = grupos;
+
+    window.statsData = { paises: {}, asns: {}, botnets: {}, grupos: {}, fuentes: {} };
+    d.forEach(item => {
+        if (item.pais) window.statsData.paises[item.pais] = (window.statsData.paises[item.pais] || 0) + 1;
+        if (item.asn) window.statsData.asns[item.asn] = (window.statsData.asns[item.asn] || 0) + 1;
+        if (item.botnet && item.botnet !== '-') window.statsData.botnets[item.botnet] = (window.statsData.botnets[item.botnet] || 0) + 1;
+        if (item.grupo && item.grupo !== '-') window.statsData.grupos[item.grupo] = (window.statsData.grupos[item.grupo] || 0) + 1;
+        if (item.fuente_origen) window.statsData.fuentes[item.fuente_origen] = (window.statsData.fuentes[item.fuente_origen] || 0) + 1;
+    });
+    // Actualizar gráfico de tarta con top 5 países
+    updatePieChart(window.statsData.paises);
+}
+
+function showModal(tipo) {
+    const modal = document.getElementById('statsModal');
+    const title = document.getElementById('modalTitle');
+    const list = document.getElementById('modalList');
+    let data = {}, titleText = '';
+    if (tipo === 'paises') { data = window.statsData.paises; titleText = '🌍 TOP 20 PAÍSES'; }
+    else if (tipo === 'asns') { data = window.statsData.asns; titleText = '🔧 TOP 20 ASN'; }
+    else if (tipo === 'botnets') { data = window.statsData.botnets; titleText = '🔥 TOP 20 BOTNETS'; }
+    else if (tipo === 'grupos') { data = window.statsData.grupos; titleText = '🚩 TOP 20 GRUPOS'; }
+    else if (tipo === 'fuentes') { data = window.statsData.fuentes; titleText = '📡 TOP 20 FUENTES'; }
+    else if (tipo === 'total') {
+        titleText = '📊 RESUMEN GLOBAL';
+        list.innerHTML = `<li><span>Total IPs únicas</span><span>${document.getElementById('total-ips').textContent}</span></li>
+        <li><span>Países distintos</span><span>${document.getElementById('total-paises').textContent}</span></li>
+        <li><span>ASN distintos</span><span>${document.getElementById('total-asns').textContent}</span></li>
+        <li><span>Botnets detectadas</span><span>${document.getElementById('total-botnets').textContent}</span></li>
+        <li><span>Grupos detectados</span><span>${document.getElementById('total-grupos').textContent}</span></li>`;
+        title.textContent = titleText;
+        modal.style.display = 'block';
+        return;
+    }
+    const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]).slice(0, 20);
+    list.innerHTML = sorted.map(([k, v]) => `<li><span>${k}</span><span>${v} IPs</span></li>`).join('');
+    if (sorted.length === 0) list.innerHTML = '<li>No hay datos suficientes</li>';
+    title.textContent = titleText;
+    modal.style.display = 'block';
+}
+
+function closeModal() { document.getElementById('statsModal').style.display = 'none'; }
+window.onclick = function(e) { const m = document.getElementById('statsModal'); if (e.target === m) m.style.display = 'none'; }
+
+function getFilteredData() {
+    if (currentFilter === 'botnet') return allData.filter(i => i.botnet && i.botnet !== '-');
+    if (currentFilter === 'grupo') return allData.filter(i => i.grupo && i.grupo !== '-');
+    if (currentFilter === 'fuente') return allData.filter(i => i.fuente_origen && i.fuente_origen !== '-');
+    return allData;
+}
+
+function renderPage() {
+    const filtered = getFilteredData();
+    const totalPages = Math.ceil(filtered.length / itemsPerPage);
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+    const start = (currentPage - 1) * itemsPerPage;
+    const pageData = filtered.slice(start, start + itemsPerPage);
+    const tbody = document.getElementById('ip-tbody');
+    tbody.innerHTML = '';
+    if (pageData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:2rem;">No hay datos</td></tr>';
+        return;
+    }
+    pageData.forEach((item, idx) => {
+        const rowIdx = start + idx + 1;
+        const botnetDisplay = item.botnet && item.botnet !== '-' ? item.botnet : '-';
+        const grupoDisplay = item.grupo && item.grupo !== '-' ? item.grupo : '-';
+        const fuenteDisplay = item.fuente_origen && item.fuente_origen !== '-' ? item.fuente_origen.slice(0, 25) : '-';
+        const row = `<tr>
+            <td>${rowIdx}</td>
+            <td class="ip">${item.ip}</td>
+            <td><span class="flag">${getFlagEmoji(item.codigo_pais)}</span> ${item.pais || 'Desconocido'}</td>
+            <td class="asn">${item.asn || '-'}</td>
+            <td class="org">${(item.org || '-').slice(0, 25)}</td>
+            <td>${botnetDisplay !== '-' ? `<span class="badge badge-botnet">${botnetDisplay}</span>` : '-'}</td>
+            <td>${grupoDisplay !== '-' ? `<span class="badge badge-grupo">${grupoDisplay}</span>` : '-'}</td>
+            <td>${fuenteDisplay !== '-' ? `<span class="badge badge-fuente">${fuenteDisplay}</span>` : '-'}</td>
+            <td>${formatDate(item.ultima_vista)}</td>
+        </tr>`;
+        tbody.insertAdjacentHTML('beforeend', row);
+    });
+    renderPagination(totalPages);
+}
+
+function renderPagination(totalPages) {
+    const pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';
+    if (totalPages <= 1) return;
+    const prev = document.createElement('button');
+    prev.className = 'page-btn' + (currentPage === 1 ? ' disabled' : '');
+    prev.textContent = '⬅ Anterior';
+    prev.onclick = function() { if (currentPage > 1) { currentPage--; renderPage(); } };
+    pagination.appendChild(prev);
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, currentPage + 2);
+    if (startPage > 1) {
+        const first = document.createElement('button');
+        first.className = 'page-btn';
+        first.textContent = '1';
+        first.onclick = function() { currentPage = 1; renderPage(); };
+        pagination.appendChild(first);
+        if (startPage > 2) pagination.appendChild(document.createTextNode('...'));
+    }
+    for (let i = startPage; i <= endPage; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'page-btn' + (i === currentPage ? ' active' : '');
+        btn.textContent = i;
+        btn.onclick = function() { currentPage = i; renderPage(); };
+        pagination.appendChild(btn);
+    }
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) pagination.appendChild(document.createTextNode('...'));
+        const last = document.createElement('button');
+        last.className = 'page-btn';
+        last.textContent = totalPages;
+        last.onclick = function() { currentPage = totalPages; renderPage(); };
+        pagination.appendChild(last);
+    }
+    const next = document.createElement('button');
+    next.className = 'page-btn' + (currentPage === totalPages ? ' disabled' : '');
+    next.textContent = 'Siguiente ➔';
+    next.onclick = function() { if (currentPage < totalPages) { currentPage++; renderPage(); } };
+    pagination.appendChild(next);
+}
+
+function updatePieChart(paisesData) {
+    const ctx = document.getElementById('pieChart').getContext('2d');
+    const sorted = Object.entries(paisesData).sort((a,b) => b[1] - a[1]).slice(0, 5);
+    const labels = sorted.map(([k]) => k);
+    const values = sorted.map(([,v]) => v);
+    if (pieChart) pieChart.destroy();
+    pieChart = new Chart(ctx, {
+        type: 'pie',
+        data: { labels: labels, datasets: [{ data: values, backgroundColor: ['#00ff9d', '#ff6b4a', '#4a9eff', '#ffaa00', '#ff00ff'] }] },
+        options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#e0e5f0' } } } }
+    });
+}
+
+async function updateTimeline() {
+    try {
+        const response = await fetch(`/api/timeline?range=${currentTimelineRange}`);
+        const data = await response.json();
+        if (!timelineChart) {
+            const ctx = document.getElementById('timelineChart').getContext('2d');
+            timelineChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: [], datasets: [{ label: 'IPs detectadas', data: [], borderColor: '#00ff9d', backgroundColor: 'rgba(0,255,157,0.1)', fill: true }] },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: '#e0e5f0' } } } }
+            });
+        }
+        timelineChart.data.labels = data.labels;
+        timelineChart.data.datasets[0].data = data.values;
+        timelineChart.update();
+    } catch(e) { console.error(e); }
+}
+
+function cargarContexto(data) {
+    const insights = [];
+    const grupos = {}, paises = {}, botnets = {}, fuentes = {};
+    data.forEach(item => {
+        if (item.grupo && item.grupo !== '-') grupos[item.grupo] = (grupos[item.grupo] || 0) + 1;
+        if (item.pais) paises[item.pais] = (paises[item.pais] || 0) + 1;
+        if (item.botnet && item.botnet !== '-') botnets[item.botnet] = (botnets[item.botnet] || 0) + 1;
+        if (item.fuente_origen && item.fuente_origen !== '-') fuentes[item.fuente_origen] = (fuentes[item.fuente_origen] || 0) + 1;
+    });
+    if (Object.keys(grupos).length > 0) {
+        const tg = Object.entries(grupos).sort((a,b) => b[1] - a[1])[0];
+        insights.push(`⚠ <strong>Grupo activo:</strong> ${tg[0]} (${tg[1]} IPs detectadas)`);
+    }
+    if (Object.keys(paises).length > 0) {
+        const tp = Object.entries(paises).sort((a,b) => b[1] - a[1])[0];
+        insights.push(`🌍 <strong>Origen principal:</strong> ${tp[0]} (${tp[1]} IPs)`);
+    }
+    if (Object.keys(botnets).length > 0) {
+        const tb = Object.entries(botnets).sort((a,b) => b[1] - a[1])[0];
+        insights.push(`🔥 <strong>Botnet predominante:</strong> ${tb[0]} (${tb[1]} IPs)`);
+    }
+    if (Object.keys(fuentes).length > 0) {
+        const tf = Object.entries(fuentes).sort((a,b) => b[1] - a[1])[0];
+        insights.push(`📡 <strong>Fuente más activa:</strong> ${tf[0]} (${tf[1]} IPs)`);
+    }
+    // Análisis adicional: evolución de detecciones
+    const hoy = new Date();
+    const hace7d = new Date(); hace7d.setDate(hoy.getDate() - 7);
+    const recientes = data.filter(item => new Date(item.ultima_vista) >= hace7d).length;
+    insights.push(`📈 <strong>Tendencia reciente:</strong> ${recientes} IPs en los últimos 7 días (${((recientes/data.length)*100).toFixed(1)}% del total)`);
+    if (insights.length === 0) insights.push('✅ No se han detectado amenazas significativas en este período.');
+    document.getElementById('context-insights').innerHTML = '<ul>' + insights.map(x => '<li>' + x + '</li>').join('') + '</ul>';
+}
+
+async function cargarDatos() {
+    try {
+        const response = await fetch('/api/ips');
+        const data = await response.json();
+        allData = data;
+        updateStats(data);
+        cargarContexto(data);
+        updateTimeline();
+        renderPage();
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+function buscarIP() {
+    const query = document.getElementById('ip-search').value.trim();
+    if (!query) { cargarDatos(); return; }
+    const filtered = allData.filter(item => item.ip === query);
+    if (filtered.length === 0) {
+        alert(`IP ${query} no encontrada en los escaneos.`);
+        return;
+    }
+    // Mostrar solo esa IP en la tabla
+    const tbody = document.getElementById('ip-tbody');
+    tbody.innerHTML = '';
+    filtered.forEach((item, idx) => {
+        const row = `<tr>
+            <td>1</td>
+            <td class="ip">${item.ip}</td>
+            <td><span class="flag">${getFlagEmoji(item.codigo_pais)}</span> ${item.pais || 'Desconocido'}</td>
+            <td class="asn">${item.asn || '-'}</td>
+            <td class="org">${(item.org || '-').slice(0, 25)}</td>
+            <td>${item.botnet && item.botnet !== '-' ? `<span class="badge badge-botnet">${item.botnet}</span>` : '-'}</td>
+            <td>${item.grupo && item.grupo !== '-' ? `<span class="badge badge-grupo">${item.grupo}</span>` : '-'}</td>
+            <td>${item.fuente_origen && item.fuente_origen !== '-' ? `<span class="badge badge-fuente">${item.fuente_origen.slice(0,25)}</span>` : '-'}</td>
+            <td>${formatDate(item.ultima_vista)}</td>
+        </tr>`;
+        tbody.insertAdjacentHTML('beforeend', row);
+    });
+    document.getElementById('pagination').innerHTML = '';
+}
+
+document.getElementById('manual-refresh').addEventListener('click', cargarDatos);
+document.getElementById('search-ip-btn').addEventListener('click', buscarIP);
+document.getElementById('ip-search').addEventListener('keypress', function(e) { if (e.key === 'Enter') buscarIP(); });
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        currentFilter = this.dataset.filter;
+        currentPage = 1;
+        renderPage();
+    });
+});
+document.querySelectorAll('.range-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        currentTimelineRange = this.dataset.range;
+        updateTimeline();
+    });
+});
+
+setInterval(cargarDatos, 30000);
+cargarDatos();
+</script>
+</body>
+</html>
+""")
+
+@app.route('/api/ips')
+def api_ips():
+    try:
+        with open(ULTIMAS_IPS_JSON, 'r', encoding='utf-8') as f:
+            return jsonify(json.load(f))
+    except:
+        return jsonify([])
+
+@app.route('/api/timeline')
+def api_timeline():
+    """Devuelve datos de evolución para el rango solicitado (7d, 1m, 2m, 3m, all)"""
+    rango = request.args.get('range', '7d')
+    historico = cargar_historico()
+    if not historico:
+        return jsonify({'labels': [], 'values': []})
+
+    ahora = datetime.now()
+    if rango == '7d':
+        inicio = ahora - timedelta(days=7)
+        etiquetas = [(ahora - timedelta(days=i)).strftime('%Y-%m-%d') for i in range(6, -1, -1)]
+    elif rango == '1m':
+        inicio = ahora - timedelta(days=30)
+        etiquetas = []
+        for i in range(29, -1, -1):
+            d = ahora - timedelta(days=i)
+            etiquetas.append(d.strftime('%Y-%m-%d'))
+    elif rango == '2m':
+        inicio = ahora - timedelta(days=60)
+        etiquetas = []
+        for i in range(59, -1, -1):
+            d = ahora - timedelta(days=i)
+            etiquetas.append(d.strftime('%Y-%m-%d'))
+    elif rango == '3m':
+        inicio = ahora - timedelta(days=90)
+        etiquetas = []
+        for i in range(89, -1, -1):
+            d = ahora - timedelta(days=i)
+            etiquetas.append(d.strftime('%Y-%m-%d'))
+    else:  # 'all'
+        # Obtener la fecha más antigua del histórico
+        fechas = [datetime.fromisoformat(item['ultima_vista']) for item in historico if 'ultima_vista' in item]
+        if fechas:
+            inicio = min(fechas)
+        else:
+            inicio = ahora - timedelta(days=30)
+        # Generar etiquetas día a día desde inicio hasta hoy
+        delta = (ahora - inicio).days
+        etiquetas = []
+        for i in range(delta + 1):
+            d = inicio + timedelta(days=i)
+            etiquetas.append(d.strftime('%Y-%m-%d'))
+
+    # Contar IPs por día
+    conteo = {fecha: 0 for fecha in etiquetas}
+    for item in historico:
+        if 'ultima_vista' in item:
+            fecha_item = datetime.fromisoformat(item['ultima_vista']).strftime('%Y-%m-%d')
+            if fecha_item in conteo:
+                conteo[fecha_item] += 1
+
+    valores = [conteo[f] for f in etiquetas]
+    return jsonify({'labels': etiquetas, 'values': valores})
+
+@app.route('/download-json')
+def download_json():
+    try:
+        if not os.path.exists(ULTIMAS_IPS_JSON):
+            return "Archivo no disponible", 404
+        return send_file(ULTIMAS_IPS_JSON, as_attachment=True, download_name='escaneos_ultimas.json', mimetype='application/json')
+    except Exception as e:
+        return f"Error: {e}", 404
+
+def iniciar_web():
+    ip = obtener_ip_local()
+    print(f"\n{VERDE}🌐 Servidor web activo en:{RESET}")
+    print(f"   📍 Local:   http://localhost:{PUERTO_WEB}")
+    print(f"   📍 Red:     http://{ip}:{PUERTO_WEB}")
+    print(f"{AMARILLO}Presiona Ctrl+C para volver al menú{RESET}\n")
+    app.run(host='127.0.0.1', port=PUERTO_WEB, debug=False, use_reloader=False)
+
 # ================= MONITOR DE ESCANEOS EN TIEMPO REAL =================
 def monitor_escaneos():
     print(f"\n{CIAN}{NEGRITA}=== MONITOR NEBULA ANTISCAN EN TIEMPO REAL ==={RESET}")
@@ -824,7 +1582,7 @@ def monitor_escaneos():
                     print(f"  {i+1:4}. {ip:<18} {VERDE}{pais:<15}{RESET} ASN:{AMARILLO}{asn:<12}{RESET} {AZUL}{org:<20}{RESET} 🔥{botnet_str:<30} 🚩{grupo_str}")
                 else:
                     print(f"  {i+1:4}. {ip:<18} {AMARILLO}(geolocalización no disponible){RESET}")
-            if i >= 2999 and len(lista) > 3000:   # ← límite de impresión en 3000
+            if i >= 2999 and len(lista) > 3000:
                 print(f"\n{AMARILLO}... y {len(lista)-3000} más{RESET}")
                 break
 
@@ -872,7 +1630,7 @@ def monitor_escaneos():
 
         ultimas_ips = nuevas_ips
 
-        # 🔥 LIMITAR EL NÚMERO DE IPs A PROCESAR (para que no se cuelgue)
+        # Limitar a 10000 IPs para no saturar
         MAX_IPS = 10000
         if len(ultimas_ips) > MAX_IPS:
             ultimas_ips = set(list(ultimas_ips)[:MAX_IPS])
@@ -899,6 +1657,7 @@ def monitor_escaneos():
                     "ultima_vista": datetime.now().isoformat()
                 })
         guardar_ultimas_ips(datos_ip)
+        guardar_historico(datos_ip)   # Guardar en histórico para evolución
 
         if corriendo:
             for _ in range(30):
@@ -907,562 +1666,6 @@ def monitor_escaneos():
                 time.sleep(1)
 
     print(f"\n{ROJO}Monitor detenido.{RESET}")
-
-# ================= SERVIDOR WEB (DASHBOARD CYBERPUNK) =================
-def obtener_ip_local():
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
-    except:
-        return "127.0.0.1"
-
-@app.route('/')
-def index():
-    return render_template_string(r"""
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NEBULA ANTISCAN · Cyber Threat Detection</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-font-family: 'Inter', sans-serif;
-background: #0a0c15;
-color: #e0e5f0;
-padding: 2rem 1rem;
-position: relative;
-overflow-x: hidden;
-}
-body::before {
-content: '';
-position: fixed;
-top: 0; left: 0; width: 100%; height: 100%;
-background: linear-gradient(90deg, transparent 95%, rgba(0,255,157,0.02) 50%),
-            linear-gradient(0deg, transparent 95%, rgba(255,107,74,0.02) 50%);
-background-size: 50px 50px;
-pointer-events: none;
-z-index: -1;
-}
-.container { max-width: 1600px; margin: 0 auto; }
-h1 {
-font-size: 2.8rem;
-font-weight: 800;
-margin-bottom: 0.5rem;
-text-align: center;
-background: linear-gradient(135deg, #00ff9d, #ff6b4a);
--webkit-background-clip: text;
--webkit-text-fill-color: transparent;
-letter-spacing: 1px;
-}
-.subtitle {
-text-align: center;
-color: #8892b0;
-margin-bottom: 2rem;
-font-size: 0.9rem;
-text-transform: uppercase;
-letter-spacing: 3px;
-}
-.context-panel {
-background: rgba(0,0,0,0.6);
-border-left: 4px solid #ff6b4a;
-padding: 1rem;
-margin-bottom: 2rem;
-border-radius: 8px;
-}
-.context-panel h3 { color: #ff6b4a; margin-bottom: 0.5rem; }
-.context-panel ul { margin-left: 1.5rem; color: #a0b0d0; }
-.context-panel li { margin: 0.3rem 0; }
-.stats-grid {
-display: grid;
-grid-template-columns: repeat(5, 1fr);
-gap: 1.5rem;
-margin-bottom: 2rem;
-}
-.stat-card {
-background: rgba(20,25,35,0.9);
-backdrop-filter: blur(10px);
-border: 1px solid rgba(0,255,157,0.2);
-border-radius: 20px;
-padding: 1.5rem;
-transition: all 0.3s ease;
-border-top: 3px solid;
-cursor: pointer;
-}
-.stat-card:hover { transform: translateY(-5px); border-color: #00ff9d; }
-.stat-card.ips { border-top-color: #00ff9d; }
-.stat-card.paises { border-top-color: #ff6b4a; }
-.stat-card.asns { border-top-color: #4a9eff; }
-.stat-card.botnets { border-top-color: #ffaa00; }
-.stat-card.grupos { border-top-color: #ff00ff; }
-.stat-card h2 { font-size: 2rem; font-weight: 700; color: #00ff9d; }
-.stat-card p { color: #8892b0; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px; margin-top: 0.5rem; }
-.stat-card .expand-hint { font-size: 0.65rem; color: #ff6b4a; margin-top: 0.5rem; display: none; }
-.stat-card:hover .expand-hint { display: block; }
-.modal {
-display: none;
-position: fixed;
-z-index: 1000;
-left: 0; top: 0;
-width: 100%; height: 100%;
-background-color: rgba(0,0,0,0.8);
-backdrop-filter: blur(5px);
-}
-.modal-content {
-background: #0f121c;
-margin: 5% auto;
-padding: 2rem;
-border: 1px solid #00ff9d;
-border-radius: 20px;
-width: 80%;
-max-width: 600px;
-max-height: 80vh;
-overflow-y: auto;
-color: #e0e5f0;
-position: relative;
-}
-.modal-content h3 { color: #ff6b4a; margin-bottom: 1rem; font-size: 1.5rem; }
-.modal-content ul { list-style: none; padding: 0; }
-.modal-content li { padding: 0.5rem; border-bottom: 1px solid rgba(0,255,157,0.2); display: flex; justify-content: space-between; }
-.modal-content li span:first-child { font-weight: 600; }
-.modal-content li span:last-child { color: #00ff9d; }
-.close { position: absolute; right: 1.5rem; top: 1rem; color: #ff6b4a; font-size: 2rem; cursor: pointer; }
-.close:hover { color: #00ff9d; }
-.controls-bar {
-display: flex;
-flex-wrap: wrap;
-gap: 1rem;
-margin-bottom: 1.5rem;
-justify-content: space-between;
-align-items: center;
-}
-.filters { display: flex; flex-wrap: wrap; gap: 0.8rem; }
-.filter-btn {
-background: rgba(30,35,50,0.9);
-border: 1px solid rgba(0,255,157,0.3);
-color: #a0b0d0;
-padding: 0.5rem 1rem;
-border-radius: 30px;
-cursor: pointer;
-font-size: 0.8rem;
-transition: all 0.2s;
-}
-.filter-btn:hover, .filter-btn.active {
-background: #00ff9d;
-color: #0a0c15;
-border-color: #00ff9d;
-}
-.refresh-btn {
-background: rgba(30,35,50,0.9);
-border: 1px solid rgba(255,107,74,0.5);
-color: #ff6b4a;
-padding: 0.5rem 1.2rem;
-border-radius: 30px;
-cursor: pointer;
-font-size: 0.8rem;
-font-weight: 600;
-}
-.refresh-btn:hover { background: #ff6b4a; color: #0a0c15; }
-.chart-container {
-background: rgba(20,25,35,0.9);
-backdrop-filter: blur(10px);
-border: 1px solid rgba(0,255,157,0.2);
-border-radius: 20px;
-padding: 1.5rem;
-margin-bottom: 1.5rem;
-}
-.chart-container h3 { color: #ff6b4a; margin-bottom: 1rem; font-size: 1.1rem; }
-canvas { max-height: 300px; }
-.card {
-background: rgba(20,25,35,0.9);
-backdrop-filter: blur(10px);
-border: 1px solid rgba(0,255,157,0.2);
-border-radius: 20px;
-overflow: hidden;
-margin-bottom: 1.5rem;
-}
-.card-header {
-background: rgba(0,0,0,0.5);
-border-bottom: 1px solid rgba(255,107,74,0.3);
-padding: 1rem 1.5rem;
-display: flex;
-justify-content: space-between;
-align-items: center;
-flex-wrap: wrap;
-gap: 1rem;
-}
-.card-header h3 { color: #ff6b4a; font-size: 1.1rem; }
-.download-link {
-color: #00ff9d;
-text-decoration: none;
-border: 1px solid #00ff9d;
-padding: 0.4rem 1rem;
-border-radius: 30px;
-font-size: 0.8rem;
-}
-.download-link:hover { background: #00ff9d; color: #0a0c15; }
-.table-container { overflow-x: auto; padding: 0 1.5rem 1.5rem 1.5rem; }
-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-th { background: rgba(30,35,50,0.8); color: #00ff9d; padding: 0.8rem 0.5rem; text-align: left; font-weight: 600; }
-td { padding: 0.7rem 0.5rem; border-bottom: 1px solid rgba(255,107,74,0.15); }
-tr:hover { background: rgba(0,255,157,0.05); }
-.ip { font-family: monospace; color: #00ff9d; font-weight: 600; }
-.asn { color: #ffaa00; font-family: monospace; }
-.org { color: #4a9eff; }
-.badge {
-display: inline-block;
-padding: 0.2rem 0.6rem;
-border-radius: 20px;
-font-size: 0.7rem;
-font-weight: 600;
-background: rgba(0,255,157,0.1);
-border: 1px solid #00ff9d;
-color: #00ff9d;
-}
-.badge-botnet { background: rgba(255,107,74,0.15); border-color: #ff6b4a; color: #ff6b4a; }
-.badge-grupo { background: rgba(255,107,74,0.15); border-color: #ff6b4a; color: #ff6b4a; }
-.badge-fuente { background: rgba(74,158,255,0.15); border-color: #4a9eff; color: #4a9eff; }
-.pagination {
-display: flex;
-justify-content: center;
-gap: 0.5rem;
-margin-top: 1.5rem;
-flex-wrap: wrap;
-}
-.page-btn {
-background: rgba(30,35,50,0.9);
-border: 1px solid rgba(0,255,157,0.3);
-color: #e0e5f0;
-padding: 0.4rem 0.9rem;
-border-radius: 8px;
-cursor: pointer;
-transition: all 0.2s;
-font-weight: 500;
-}
-.page-btn:hover, .page-btn.active { background: #00ff9d; color: #0a0c15; border-color: #00ff9d; }
-.page-btn.disabled { opacity: 0.3; cursor: not-allowed; }
-.footer { margin-top: 2rem; text-align: center; color: #3a4450; font-size: 0.75rem; }
-@media (max-width: 768px) {
-.stats-grid { grid-template-columns: repeat(2, 1fr); }
-h1 { font-size: 1.8rem; }
-.modal-content { width: 95%; margin: 10% auto; }
-}
-</style>
-</head>
-<body>
-<div class="container">
-<h1>★ NEBULA ANTISCAN ★</h1>
-<div class="subtitle">AGGRESSIVE SCAN DETECTION · REAL-TIME THREAT INTELLIGENCE</div>
-<div class="context-panel" id="context-panel">
-<h3>📊 Análisis de Contexto</h3>
-<div id="context-insights">Cargando inteligencia...</div>
-</div>
-<div class="stats-grid">
-<div class="stat-card ips" onclick="showModal('total')">
-<h2 id="total-ips">0</h2><p>IPs ÚNICAS</p><div class="expand-hint">🔍 Haz clic para ver detalles</div>
-</div>
-<div class="stat-card paises" onclick="showModal('paises')">
-<h2 id="total-paises">0</h2><p>PAÍSES</p><div class="expand-hint">🔍 Haz clic para ver top 20</div>
-</div>
-<div class="stat-card asns" onclick="showModal('asns')">
-<h2 id="total-asns">0</h2><p>ASN DISTINTOS</p><div class="expand-hint">🔍 Haz clic para ver top 20</div>
-</div>
-<div class="stat-card botnets" onclick="showModal('botnets')">
-<h2 id="total-botnets">0</h2><p>BOTNETS</p><div class="expand-hint">🔍 Haz clic para ver top 20</div>
-</div>
-<div class="stat-card grupos" onclick="showModal('grupos')">
-<h2 id="total-grupos">0</h2><p>GRUPOS</p><div class="expand-hint">🔍 Haz clic para ver top 20</div>
-</div>
-</div>
-<div id="statsModal" class="modal">
-<div class="modal-content"><span class="close" onclick="closeModal()">&times;</span><h3 id="modalTitle">Estadísticas</h3><ul id="modalList"></ul></div>
-</div>
-<div class="controls-bar">
-<div class="filters" id="filters">
-<button class="filter-btn active" data-filter="all">🌍 Todas</button>
-<button class="filter-btn" data-filter="botnet">🔥 Con botnet</button>
-<button class="filter-btn" data-filter="grupo">🚩 Con grupo</button>
-<button class="filter-btn" data-filter="fuente">📡 Por fuente origen</button>
-</div>
-<button class="refresh-btn" id="manual-refresh">🔄 Actualizar ahora</button>
-</div>
-<div class="chart-container"><h3>📈 Evolución temporal (últimos 7 días)</h3><canvas id="timelineChart"></canvas></div>
-<div class="card">
-<div class="card-header"><h3>🌐 ÚLTIMAS IPs DETECTADAS</h3><a href="/download-json" class="download-link">📥 DESCARGAR JSON</a></div>
-<div class="table-container">
-<table id="ip-table">
-<thead>
-<th>#</th><th>IP</th><th>PAÍS</th><th>ASN</th><th>ORGANIZACIÓN</th><th>🔥 BOTNET</th><th> 🚩 GRUPO</th><th>📡 FUENTE</th><th>ÚLTIMA VEZ</th>
-</thead>
-<tbody id="ip-tbody"><tr><td colspan="9" style="text-align:center; padding:2rem;">Cargando datos...<\/td><\/tr><\/tbody>
-<\/table>
-<\/div>
-<div class="pagination" id="pagination"><\/div>
-<\/div>
-<div class="footer"><p>73 fuentes OSINT · 80+ feeds inteligencia · Grupos APT/Ransomware/Hacktivistas · Actualización cada 30s · 🛡 Condor2026</p><\/div>
-<\/div>
-<script>
-let currentPage = 1, itemsPerPage = 30, allData = [], currentFilter = 'all', timelineChart = null;
-
-function getFlagEmoji(c) {
-if (!c || c.length !== 2) return '🌐';
-return String.fromCodePoint(...c.toUpperCase().split('').map(c => 127397 + c.charCodeAt()));
-}
-
-function formatDate(i) {
-if (!i) return '';
-const d = new Date(i);
-return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + ' ' + d.toLocaleDateString([], {day:'2-digit', month:'2-digit'});
-}
-
-function updateStats(d) {
-const total = d.length;
-const paises = new Set(d.map(i => i.codigo_pais).filter(c => c));
-const asns = new Set(d.map(i => i.asn).filter(a => a));
-const botnets = d.filter(i => i.botnet && i.botnet !== '-').length;
-const grupos = d.filter(i => i.grupo && i.grupo !== '-').length;
-
-document.getElementById('total-ips').textContent = total;
-document.getElementById('total-paises').textContent = paises.size;
-document.getElementById('total-asns').textContent = asns.size;
-document.getElementById('total-botnets').textContent = botnets;
-document.getElementById('total-grupos').textContent = grupos;
-
-window.statsData = { paises: {}, asns: {}, botnets: {}, grupos: {}, fuentes: {} };
-
-d.forEach(item => {
-if (item.pais) window.statsData.paises[item.pais] = (window.statsData.paises[item.pais] || 0) + 1;
-if (item.asn) window.statsData.asns[item.asn] = (window.statsData.asns[item.asn] || 0) + 1;
-if (item.botnet && item.botnet !== '-') window.statsData.botnets[item.botnet] = (window.statsData.botnets[item.botnet] || 0) + 1;
-if (item.grupo && item.grupo !== '-') window.statsData.grupos[item.grupo] = (window.statsData.grupos[item.grupo] || 0) + 1;
-if (item.fuente_origen) window.statsData.fuentes[item.fuente_origen] = (window.statsData.fuentes[item.fuente_origen] || 0) + 1;
-});
-}
-
-function showModal(tipo) {
-const modal = document.getElementById('statsModal');
-const title = document.getElementById('modalTitle');
-const list = document.getElementById('modalList');
-
-let data = {}, titleText = '';
-
-if (tipo === 'paises') { data = window.statsData.paises; titleText = '🌍 TOP 20 PAÍSES'; }
-else if (tipo === 'asns') { data = window.statsData.asns; titleText = '🔧 TOP 20 ASN'; }
-else if (tipo === 'botnets') { data = window.statsData.botnets; titleText = '🔥 TOP 20 BOTNETS'; }
-else if (tipo === 'grupos') { data = window.statsData.grupos; titleText = '🚩 TOP 20 GRUPOS'; }
-else if (tipo === 'fuentes') { data = window.statsData.fuentes; titleText = '📡 TOP 20 FUENTES'; }
-else if (tipo === 'total') {
-titleText = '📊 RESUMEN GLOBAL';
-list.innerHTML = `<li><span>Total IPs únicas</span><span>${document.getElementById('total-ips').textContent}</span></li>
-<li><span>Países distintos</span><span>${document.getElementById('total-paises').textContent}</span></li>
-<li><span>ASN distintos</span><span>${document.getElementById('total-asns').textContent}</span></li>
-<li><span>Botnets detectadas</span><span>${document.getElementById('total-botnets').textContent}</span></li>
-<li><span>Grupos detectados</span><span>${document.getElementById('total-grupos').textContent}</span></li>`;
-title.textContent = titleText;
-modal.style.display = 'block';
-return;
-}
-
-const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]).slice(0, 20);
-list.innerHTML = sorted.map(([k, v]) => `<li><span>${k}</span><span>${v} IPs</span></li>`).join('');
-if (sorted.length === 0) list.innerHTML = '<li>No hay datos suficientes</li>';
-title.textContent = titleText;
-modal.style.display = 'block';
-}
-
-function closeModal() { document.getElementById('statsModal').style.display = 'none'; }
-window.onclick = function(e) { const m = document.getElementById('statsModal'); if (e.target === m) m.style.display = 'none'; }
-
-function getFilteredData() {
-if (currentFilter === 'botnet') return allData.filter(i => i.botnet && i.botnet !== '-');
-if (currentFilter === 'grupo') return allData.filter(i => i.grupo && i.grupo !== '-');
-if (currentFilter === 'fuente') return allData.filter(i => i.fuente_origen && i.fuente_origen !== '-');
-return allData;
-}
-
-function renderPage() {
-const filtered = getFilteredData();
-const totalPages = Math.ceil(filtered.length / itemsPerPage);
-if (currentPage > totalPages) currentPage = totalPages;
-if (currentPage < 1) currentPage = 1;
-const start = (currentPage - 1) * itemsPerPage;
-const pageData = filtered.slice(start, start + itemsPerPage);
-const tbody = document.getElementById('ip-tbody');
-tbody.innerHTML = '';
-if (pageData.length === 0) {
-tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:2rem;">No hay datos<\/td><\/tr>';
-return;
-}
-pageData.forEach((item, idx) => {
-const rowIdx = start + idx + 1;
-const botnetDisplay = item.botnet && item.botnet !== '-' ? item.botnet : '-';
-const grupoDisplay = item.grupo && item.grupo !== '-' ? item.grupo : '-';
-const fuenteDisplay = item.fuente_origen && item.fuente_origen !== '-' ? item.fuente_origen.slice(0, 25) : '-';
-const row = `<table>
-<td>${rowIdx}<\/td>
-<td class="ip">${item.ip}<\/td>
-<td><span class="flag">${getFlagEmoji(item.codigo_pais)}<\/span> ${item.pais || 'Desconocido'}<\/td>
-<td class="asn">${item.asn || '-'}<\/td>
-<td class="org">${(item.org || '-').slice(0, 25)}<\/td>
-<td>${botnetDisplay !== '-' ? `<span class="badge badge-botnet">${botnetDisplay}</span>` : '-'}<\/td>
-<td>${grupoDisplay !== '-' ? `<span class="badge badge-grupo">${grupoDisplay}</span>` : '-'}<\/td>
-<td>${fuenteDisplay !== '-' ? `<span class="badge badge-fuente">${fuenteDisplay}</span>` : '-'}<\/td>
-<td>${formatDate(item.ultima_vista)}<\/td>
-<\/tr>`;
-tbody.insertAdjacentHTML('beforeend', row);
-});
-renderPagination(totalPages);
-}
-
-function renderPagination(totalPages) {
-const pagination = document.getElementById('pagination');
-pagination.innerHTML = '';
-if (totalPages <= 1) return;
-const prev = document.createElement('button');
-prev.className = 'page-btn' + (currentPage === 1 ? ' disabled' : '');
-prev.textContent = '⬅ Anterior';
-prev.onclick = function() { if (currentPage > 1) { currentPage--; renderPage(); } };
-pagination.appendChild(prev);
-let startPage = Math.max(1, currentPage - 2);
-let endPage = Math.min(totalPages, currentPage + 2);
-if (startPage > 1) {
-const first = document.createElement('button');
-first.className = 'page-btn';
-first.textContent = '1';
-first.onclick = function() { currentPage = 1; renderPage(); };
-pagination.appendChild(first);
-if (startPage > 2) pagination.appendChild(document.createTextNode('...'));
-}
-for (let i = startPage; i <= endPage; i++) {
-const btn = document.createElement('button');
-btn.className = 'page-btn' + (i === currentPage ? ' active' : '');
-btn.textContent = i;
-btn.onclick = function() { currentPage = i; renderPage(); };
-pagination.appendChild(btn);
-}
-if (endPage < totalPages) {
-if (endPage < totalPages - 1) pagination.appendChild(document.createTextNode('...'));
-const last = document.createElement('button');
-last.className = 'page-btn';
-last.textContent = totalPages;
-last.onclick = function() { currentPage = totalPages; renderPage(); };
-pagination.appendChild(last);
-}
-const next = document.createElement('button');
-next.className = 'page-btn' + (currentPage === totalPages ? ' disabled' : '');
-next.textContent = 'Siguiente ➔';
-next.onclick = function() { if (currentPage < totalPages) { currentPage++; renderPage(); } };
-pagination.appendChild(next);
-}
-
-function updateTimeline(data) {
-if (!timelineChart) {
-const ctx = document.getElementById('timelineChart').getContext('2d');
-timelineChart = new Chart(ctx, {
-type: 'line',
-data: { labels: [], datasets: [{ label: 'IPs detectadas', data: [], borderColor: '#00ff9d', backgroundColor: 'rgba(0,255,157,0.1)', fill: true }] },
-options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: '#e0e5f0' } } } }
-});
-}
-const last7Days = [...Array(7)].map((_, i) => {
-const d = new Date(); d.setDate(d.getDate() - (6 - i)); return d.toLocaleDateString();
-});
-const counts = last7Days.map(day => data.filter(item => new Date(item.ultima_vista).toLocaleDateString() === day).length);
-timelineChart.data.labels = last7Days;
-timelineChart.data.datasets[0].data = counts;
-timelineChart.update();
-}
-
-function cargarContexto(data) {
-const insights = [], grupos = {}, paises = {}, botnets = {}, fuentes = {};
-data.forEach(item => {
-if (item.grupo && item.grupo !== '-') grupos[item.grupo] = (grupos[item.grupo] || 0) + 1;
-if (item.pais) paises[item.pais] = (paises[item.pais] || 0) + 1;
-if (item.botnet && item.botnet !== '-') botnets[item.botnet] = (botnets[item.botnet] || 0) + 1;
-if (item.fuente_origen && item.fuente_origen !== '-') fuentes[item.fuente_origen] = (fuentes[item.fuente_origen] || 0) + 1;
-});
-if (Object.keys(grupos).length > 0) {
-const tg = Object.entries(grupos).sort((a,b) => b[1] - a[1])[0];
-insights.push('⚠ <strong>Grupo activo:</strong> ' + tg[0] + ' (' + tg[1] + ' IPs detectadas)');
-}
-if (Object.keys(paises).length > 0) {
-const tp = Object.entries(paises).sort((a,b) => b[1] - a[1])[0];
-insights.push('🌍 <strong>Origen principal:</strong> ' + tp[0] + ' (' + tp[1] + ' IPs)');
-}
-if (Object.keys(botnets).length > 0) {
-const tb = Object.entries(botnets).sort((a,b) => b[1] - a[1])[0];
-insights.push('🔥 <strong>Botnet predominante:</strong> ' + tb[0] + ' (' + tb[1] + ' IPs)');
-}
-if (Object.keys(fuentes).length > 0) {
-const tf = Object.entries(fuentes).sort((a,b) => b[1] - a[1])[0];
-insights.push('📡 <strong>Fuente más activa:</strong> ' + tf[0] + ' (' + tf[1] + ' IPs)');
-}
-if (insights.length === 0) insights.push('✅ No se han detectado amenazas significativas en este período.');
-document.getElementById('context-insights').innerHTML = '<ul>' + insights.map(x => '<li>' + x + '</li>').join('') + '</ul>';
-}
-
-async function cargarDatos() {
-try {
-const response = await fetch('/api/ips');
-const data = await response.json();
-allData = data;
-updateStats(data);
-updateTimeline(data);
-cargarContexto(data);
-renderPage();
-} catch (error) {
-console.error('Error:', error);
-}
-}
-
-document.getElementById('manual-refresh').addEventListener('click', cargarDatos);
-document.querySelectorAll('.filter-btn').forEach(btn => {
-btn.addEventListener('click', function() {
-document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-this.classList.add('active');
-currentFilter = this.dataset.filter;
-currentPage = 1;
-renderPage();
-});
-});
-
-setInterval(cargarDatos, 30000);
-cargarDatos();
-</script>
-</body>
-</html>
-""")
-
-@app.route('/api/ips')
-def api_ips():
-    try:
-        with open(ULTIMAS_IPS_JSON, 'r', encoding='utf-8') as f:
-            return jsonify(json.load(f))
-    except:
-        return jsonify([])
-
-@app.route('/download-json')
-def download_json():
-    try:
-        if not os.path.exists(ULTIMAS_IPS_JSON):
-            return "Archivo no disponible", 404
-        return send_file(ULTIMAS_IPS_JSON, as_attachment=True, download_name='escaneos_ultimas.json', mimetype='application/json')
-    except Exception as e:
-        return f"Error: {e}", 404
-
-def iniciar_web():
-    ip = obtener_ip_local()
-    print(f"\n{VERDE}🌐 Servidor web activo en:{RESET}")
-    print(f"   📍 Local:   http://localhost:{PUERTO_WEB}")
-    print(f"   📍 Red:     http://{ip}:{PUERTO_WEB}")
-    print(f"{AMARILLO}Presiona Ctrl+C para volver al menú{RESET}\n")
-    app.run(host='127.0.0.1', port=PUERTO_WEB, debug=False, use_reloader=False)
 
 # ================= CICLO ÚNICO (PRUEBA RÁPIDA) =================
 def ciclo_unico():
@@ -1497,6 +1700,27 @@ def ciclo_unico():
         if i >= 49 and len(lista) > 50:
             print(f"\n{AMARILLO}... y {len(lista)-50} más{RESET}")
             break
+
+    # Guardar también en histórico para este ciclo
+    datos_ip = []
+    for ip in todas_ips:
+        if '/' not in ip:
+            geo = geo_ip(ip) or {}
+            fuente_ip = fuentes_origen.get(ip, None)
+            grupo, botnet, fuente_detectada = obtener_intel(ip, fuente_ip)
+            datos_ip.append({
+                "ip": ip,
+                "pais": geo.get('pais', 'Desconocido'),
+                "codigo_pais": geo.get('codigo_pais', ''),
+                "asn": geo.get('asn', ''),
+                "org": geo.get('org', ''),
+                "grupo": grupo,
+                "botnet": botnet,
+                "fuente_origen": fuente_detectada,
+                "ultima_vista": datetime.now().isoformat()
+            })
+    guardar_ultimas_ips(datos_ip)
+    guardar_historico(datos_ip)
 
 # ================= ESTADÍSTICAS Y ÚLTIMAS IPS =================
 def ver_estadisticas():
@@ -1574,11 +1798,12 @@ def banner():
 ║                              ███████║╚██████╗██║  ██║██║ ╚████║                       ║
 ║                              ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═══╝                       ║
 ║                                                                                       ║
-║ 🛡 NEBULA ANTISCAN v1.3 – Detector de escaneos agresivos en tiempo real                ║
+║ 🛡 NEBULA ANTISCAN v2.0 – Detector de escaneos agresivos en tiempo real                ║
 ║ 📊 Formato: IP | País | ASN | Organización | 🔥 botnet | 🚩 grupo                     ║
 ║ # Puerto 5091 · By Condor2026 - SpectrumSecurity                                      ║
 ║ # FUENTES: 73 listas negras | INTEL: 80+ feeds | Grupos: APT/Ransomware/Hacktivistas  ║
 ║ # 130 USER-AGENTS · VT API · Dashboard cyberpunk                                      ║
+║ # MEJORAS v2: Gráfico tarta | Buscador IP | Evolución 1/2/3 meses + toda              ║
 ╚═══════════════════════════════════════════════════════════════════════════════════════╝{RESET}
 """)
 
