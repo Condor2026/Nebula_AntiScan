@@ -79,10 +79,10 @@ text
 ## 🧰 Instalación y Ejecución
 
 ```bash
-   git clone https://github.com/Condor2026/Nebula_AntiScan
-   cd Nebula_AntiScan
+   git clone https://github.com/Condor2026/Nebula_AntiScan2
+   cd Nebula_AntiScan2
    pip install -r requirements.txt   (Flask, requests)
-   python Nebula_AntiScan.py
+   python Nebula_AntiScan2.py
    📊 Métricas Actuales
    Componente	Cantidad
    User-Agents únicos	130
@@ -101,7 +101,6 @@ text
    Notificaciones Telegram	4 semanas
    Versión 2.0 (interfaz web completa)	6 semanas
    🤝 Contribuciones
-   ¿Quieres ayudar? Revisa las tareas abiertas en Fase 5 y Fase 6. Crea un issue o un PR.
 
    📜 Licencia
    GPL v3 – By Condor2026 / SpectrumSecurity
