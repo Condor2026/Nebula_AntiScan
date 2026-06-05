@@ -7,4 +7,4 @@ pip install -r requirements.txt
 echo "📁 Creando directorios necesarios..."
 mkdir -p datos_escaneos intel_escaneos images
 
-echo "✅ Instalación completa. Ejecuta: python nebula_antiscan.py"
+echo "✅ Instalación completa. Ejecuta: python Nebula_AntiScan2.py"
