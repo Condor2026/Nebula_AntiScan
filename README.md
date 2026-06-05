@@ -13,6 +13,11 @@
 ![Dashboard](https://img.shields.io/badge/Web%20Dashboard-Cyberpunk-ff69b4)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)
 
+<p align="center">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=28&duration=3000&pause=500&color=00FF9D&center=true&vCenter=true&width=600&lines=NEBULA+ANTISCAN+v2.0;DETECTOR+DE+ESCANEOS+AGRESIVOS;93.000+IPs+ÚNICAS;31+FUENTES+OSINT;80+FEEDS+DE+INTELIGENCIA" alt="Nebula Banner" />
+</p>
+
+
 # 🛡️ NEBULA ANTISCAN v2.0 – Detector de escaneos agresivos en tiempo real
 
 **NEBULA ANTISCAN** es una herramienta de ciberdefensa diseñada para detectar, geolocalizar y clasificar **escaneos agresivos e ilegales** dirigidos a infraestructuras críticas.  
