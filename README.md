@@ -13,7 +13,7 @@
 ![Dashboard](https://img.shields.io/badge/Web%20Dashboard-Cyberpunk-ff69b4)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)
 
-# 🛡️ NEBULA ANTISCAN v1.3 – Detector de escaneos agresivos en tiempo real
+# 🛡️ NEBULA ANTISCAN v2.0 – Detector de escaneos agresivos en tiempo real
 
 **NEBULA ANTISCAN** es una herramienta de ciberdefensa diseñada para detectar, geolocalizar y clasificar **escaneos agresivos e ilegales** dirigidos a infraestructuras críticas.  
 Nace con una filosofía clara: *“Conocer al enemigo es el primer paso para defenderte”*. Por eso su diseño prioriza la transparencia, la ética y la inteligencia de amenazas.
