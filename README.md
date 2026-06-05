@@ -310,7 +310,7 @@ NEBULA ANTISCAN es **100% código abierto** bajo licencia **GPL v3**.
 Si te es útil, considera donar para ayudar a mantenerlo y mejorarlo:
 
 - [GitHub Sponsors](https://github.com/sponsors/Condor2026)
-- [PayPal](https://paypal.me/)
+> ⚠️ **No uso PayPal.** No respeta la privacidad.
 
 
 
