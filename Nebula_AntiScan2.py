@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 Condor2026 / SpectrumSecurity
 #
-# KELTIC KRAKEN - Ireland Crime Intelligence Platform
+# Nebula_AntiScan2 - Ireland Crime Intelligence Platform
 # Copyright (C) 2026 Condor2026
 #
 # This program is free software: you can redistribute it and/or modify
