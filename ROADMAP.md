@@ -66,8 +66,8 @@ NEBULA ANTISCAN es un detector de escaneos agresivos en tiempo real que consume 
 nebula_antiscan/
 ├── Nebula_AntiScan2.py # Script principal (unificado)
 ├── datos_escaneos_nebula/
-│ ├── ultimas_ips_escaneos.json
-│ └── ultimas_ips_escaneos.json.bak (opcional)
+│── ultimas_ips_escaneos.json
+│── ultimas_ips_escaneos.json.bak (opcional)
 ├── intel_escaneos_nebula/ # Almacén de feeds descargados (se crea automáticamente)
 ├── escaneos_AAAA-MM-DD.txt # Archivos diarios de ciclos
 └── enlaces_vt_*.txt # Enlaces VirusTotal generados
