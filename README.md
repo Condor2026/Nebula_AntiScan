@@ -312,7 +312,7 @@ Este proyecto está bajo la licencia **GPL v3**. Consulta el archivo `LICENSE` p
 
 ---
 
-**Creado por Condor2026 – SpectrumSecurity para la comunidad de ciberseguridad.**
+**Creado por Condor2026 –  🦅 - Threat Security - 🦅  para la comunidad de ciberseguridad.**
 
 *¡Que los escaneos no te pillen desprevenido! 🚀*
 
